@@ -4,7 +4,7 @@ using FishNet.Object;
 //using FishNet.Scene;
 using UnityEngine;
 
-[AddComponentMenu("Game/Networking/Custom Player Spawner")]
+[AddComponentMenu("Game/Networking/User Player Spawner")]
 public class UserPlayerSpawner : MonoBehaviour
 {
     [Header("Player Data")]
