@@ -19,3 +19,6 @@ MonoBehaviour:
   - PlayerId: 2
     PlayerName: Green
     PlayerPrefab: {fileID: 2795944396828326143, guid: 51568df22f04d0748a34a82c1d3f828d, type: 3}
+  - PlayerId: 3
+    PlayerName: Blue
+    PlayerPrefab: {fileID: 2795944396828326143, guid: 4e39a13b19f1c7047822c436c8c75925, type: 3}

@@ -89,6 +89,10 @@ public class UserPlayerSpawner : MonoBehaviour
         // - data sent during authentication
         // - lobby selection
         //return conn.ClientId.ToString();
-        return "2";
+
+        //Debug.Log("lol");
+        Debug.Log("Character Id:" + PlayerStatics.CharacterId);
+
+        return PlayerStatics.CharacterId;
     }
 }

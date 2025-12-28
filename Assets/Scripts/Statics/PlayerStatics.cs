@@ -2,10 +2,8 @@ using UnityEngine;
 
 public static class PlayerStatics 
 {
-    public static int PlayerId;
-    public static int PlayerName;
+    public static string PlayerId;
+    public static string PlayerName;
 
-    public static int CharacterId;
-    public static int CharacterName;
-    public static GameObject CharacterPrefab;
+    public static string CharacterId = "3";
 }
