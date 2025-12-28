@@ -5,7 +5,7 @@ using FishNet.Object;
 using UnityEngine;
 
 [AddComponentMenu("Game/Networking/Custom Player Spawner")]
-public class CustomPlayerSpawner : MonoBehaviour
+public class UserPlayerSpawner : MonoBehaviour
 {
     [Header("Player Data")]
     [SerializeField] private SO_Player soPlayer;
