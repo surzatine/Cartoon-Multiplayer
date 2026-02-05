@@ -209,9 +209,6 @@ namespace FishNet.Managing
         /// Object pool to use for this NetworkManager. Value may be null.
         /// </summary>
         public ObjectPool ObjectPool => _objectPool;
-
-        public static object Singleton { get; set; }
-
         [Tooltip("Object pool to use for this NetworkManager. Value may be null.")]
         [SerializeField]
         private ObjectPool _objectPool;
@@ -235,7 +232,7 @@ namespace FishNet.Managing
         /// <summary>
         /// Version of this release.
         /// </summary>
-        public const string FISHNET_VERSION = "4.6.18";
+        public const string FISHNET_VERSION = "4.6.20";
         /// <summary>
         /// Maximum framerate allowed.
         /// </summary>
