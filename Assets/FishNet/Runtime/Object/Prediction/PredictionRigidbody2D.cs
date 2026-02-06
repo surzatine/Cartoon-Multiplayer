@@ -283,7 +283,7 @@ namespace FishNet.Object.Prediction
             #if UNITY_6000_1_OR_NEWER
             Rigidbody2D.linearVelocity = force;
             #else
-            Rigidbody2D.velocity = force;
+            Rigidbody2D.linearVelocity = force;
             #endif
             RemoveForces(true);
         }
