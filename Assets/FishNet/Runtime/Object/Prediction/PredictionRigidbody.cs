@@ -358,7 +358,7 @@ namespace FishNet.Object.Prediction
             #if UNITY_6000_1_OR_NEWER
             Rigidbody.linearVelocity = force;
             #else
-            Rigidbody.velocity = force;
+            Rigidbody.linearVelocity = force;
             #endif
             RemoveForces(nonAngular: true);
         }

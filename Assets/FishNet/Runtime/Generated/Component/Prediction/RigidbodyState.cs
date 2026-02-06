@@ -26,7 +26,7 @@ namespace FishNet.Component.Prediction
             #if UNITY_6000_1_OR_NEWER
             Velocity = rb.linearVelocity;
             #else
-            Velocity = rb.velocity;
+            Velocity = rb.linearVelocity;
             #endif
 
             AngularVelocity = rb.angularVelocity;
@@ -56,7 +56,7 @@ namespace FishNet.Component.Prediction
             #if UNITY_6000_1_OR_NEWER
             Velocity = rb.linearVelocity;
             #else
-            Velocity = rb.velocity;
+            Velocity = rb.linearVelocity;
             #endif
             
             AngularVelocity = rb.angularVelocity;
@@ -185,7 +185,7 @@ namespace FishNet.Component.Prediction
                 #if UNITY_6000_1_OR_NEWER
                 rb.linearVelocity = state.Velocity;
                 #else
-                rb.velocity = state.Velocity;
+                rb.linearVelocity = state.Velocity;
                 #endif
                 rb.angularVelocity = state.AngularVelocity;
             }
@@ -217,7 +217,7 @@ namespace FishNet.Component.Prediction
                 #if UNITY_6000_1_OR_NEWER
                 rb.linearVelocity = state.Velocity;
                 #else
-                rb.velocity = state.Velocity;
+                rb.linearVelocity = state.Velocity;
                 #endif
                 rb.angularVelocity = state.AngularVelocity;
             }
