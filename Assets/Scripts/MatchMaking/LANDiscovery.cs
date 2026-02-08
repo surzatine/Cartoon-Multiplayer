@@ -19,10 +19,34 @@ public class LANDiscovery : MonoBehaviour
     public event Action<RoomData> OnRoomDiscovered;
     public event Action<string> OnRoomLost; // roomId
 
+    // Singleton to prevent multiple instances
+    private static LANDiscovery instance;
+
+    // Thread-safe queue for handling broadcasts on main thread
+    private readonly System.Collections.Generic.Queue<RoomData> discoveredRoomsQueue = new System.Collections.Generic.Queue<RoomData>();
+    private readonly object queueLock = new object();
+
+    private void Awake()
+    {
+        // Ensure only one LANDiscovery exists
+        if (instance != null && instance != this)
+        {
+            Debug.LogWarning("Multiple LANDiscovery instances detected! Destroying duplicate.");
+            Destroy(gameObject);
+            return;
+        }
+        instance = this;
+    }
+
     private void OnDestroy()
     {
         StopBroadcasting();
         StopListening();
+
+        if (instance == this)
+        {
+            instance = null;
+        }
     }
 
     #region Server/Host Methods
@@ -74,7 +98,13 @@ public class LANDiscovery : MonoBehaviour
     {
         try
         {
-            listenerClient = new UdpClient(broadcastPort);
+            // Stop any existing listener first
+            StopListening();
+
+            // Create UDP client with socket reuse enabled
+            listenerClient = new UdpClient();
+            listenerClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
+            listenerClient.Client.Bind(new IPEndPoint(IPAddress.Any, broadcastPort));
             listenerClient.EnableBroadcast = true;
             listenerClient.BeginReceive(OnBroadcastReceived, null);
 
@@ -113,16 +143,23 @@ public class LANDiscovery : MonoBehaviour
             RoomData roomData = RoomData.FromJson(message);
             roomData.ipAddress = endPoint.Address.ToString();
 
-            // Notify listeners
-            OnRoomDiscovered?.Invoke(roomData);
+            // Add to queue for processing on main thread
+            lock (queueLock)
+            {
+                discoveredRoomsQueue.Enqueue(roomData);
+            }
 
             // Continue listening
             listenerClient.BeginReceive(OnBroadcastReceived, null);
         }
+        catch (ObjectDisposedException)
+        {
+            // Client was disposed, this is normal when stopping
+        }
         catch (Exception e)
         {
             Debug.LogError($"Error receiving broadcast: {e.Message}");
-            
+
             // Try to restart listening
             if (listenerClient != null)
             {
@@ -139,6 +176,16 @@ public class LANDiscovery : MonoBehaviour
 
     private void Update()
     {
+        // Process discovered rooms on main thread
+        lock (queueLock)
+        {
+            while (discoveredRoomsQueue.Count > 0)
+            {
+                RoomData roomData = discoveredRoomsQueue.Dequeue();
+                OnRoomDiscovered?.Invoke(roomData);
+            }
+        }
+
         // Broadcast room data at intervals if we're a server
         if (isServer && broadcastClient != null)
         {
