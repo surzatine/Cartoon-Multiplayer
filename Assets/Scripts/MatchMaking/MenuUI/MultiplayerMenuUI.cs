@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class MultiplayerMenuUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private LANNetworkManager networkManager;
+    [SerializeField] private MenuUIManager menuUIManager;
     [SerializeField] private GameObject hostGamePanel;
     [SerializeField] private GameObject roomBrowserPanel;
     [SerializeField] private GameObject mainMenuPanel;
@@ -70,8 +72,8 @@ public class MultiplayerMenuUI : MonoBehaviour
     private void OnBackClicked()
     {
         // Return to main game menu
-        // UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
-        Application.Quit();
+         SceneManager.LoadScene(SceneConstant.MENUSCENE);
+        //Application.Quit();
     }
 
     #endregion
@@ -83,6 +85,8 @@ public class MultiplayerMenuUI : MonoBehaviour
         SetPanelActive(mainMenuPanel, true);
         SetPanelActive(hostGamePanel, false);
         SetPanelActive(roomBrowserPanel, false);
+
+        menuUIManager.ShowMainMenu();
     }
 
     private void ShowHostPanel()

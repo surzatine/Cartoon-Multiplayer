@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using FishNet.Connection;
 
 public class HostGameUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private LANNetworkManager networkManager;
+    [SerializeField] private MenuUIManager menuUIManager;
+    [SerializeField] private LobbyManager lobbyManager;
 
     [Header("UI Input Fields")]
     [SerializeField] private TMP_InputField roomNameInput;
@@ -124,9 +127,11 @@ public class HostGameUI : MonoBehaviour
         {
             networkManager.HostGame(roomName, hostName, maxPlayers, mapName, gameMode);
             UpdateStatus($"Hosting: {roomName}", Color.green);
-            
+
             // Optionally: Switch to lobby/game scene
             // UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
+
+            menuUIManager.ShowLobbyMenu();
         }
         else
         {
@@ -137,7 +142,10 @@ public class HostGameUI : MonoBehaviour
     private void OnCancelButtonClicked()
     {
         // Return to main menu or close panel
-        gameObject.SetActive(false);
+        networkManager.Disconnect();
+        //gameObject.SetActive(false);
+        menuUIManager.ShowMainMenu();
+
     }
 
     private void UpdateIPAddress()

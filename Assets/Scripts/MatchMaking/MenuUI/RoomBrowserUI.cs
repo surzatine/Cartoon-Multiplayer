@@ -9,6 +9,7 @@ public class RoomBrowserUI : MonoBehaviour
     [Header("References")]
     [SerializeField] private LANDiscovery lanDiscovery;
     [SerializeField] private LANNetworkManager networkManager;
+    [SerializeField] private MenuUIManager menuUIManager;
 
     [Header("UI References")]
     [SerializeField] private Transform roomListContainer;
@@ -197,6 +198,8 @@ public class RoomBrowserUI : MonoBehaviour
     private void OnBackButtonClicked()
     {
         StopBrowsing();
+        
+        menuUIManager.ShowMainMenu();
         // Load main menu or previous scene
         // UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }

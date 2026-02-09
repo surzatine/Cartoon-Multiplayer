@@ -73,7 +73,7 @@ public class NetworkPortDiagnostics : MonoBehaviour
         Debug.Log("Attempting to force release ports...");
         
         // Find all LANDiscovery instances
-        LANDiscovery[] discoveries = FindObjectsOfType<LANDiscovery>();
+        LANDiscovery[] discoveries = Resources.FindObjectsOfTypeAll<LANDiscovery>();
         Debug.Log($"Found {discoveries.Length} LANDiscovery instances");
         
         foreach (var discovery in discoveries)
@@ -123,21 +123,21 @@ public class NetworkPortDiagnostics : MonoBehaviour
     {
         Debug.Log("===== NETWORK OBJECTS IN SCENE =====");
         
-        var discoveries = FindObjectsOfType<LANDiscovery>();
+        var discoveries = Resources.FindObjectsOfTypeAll<LANDiscovery>();
         Debug.Log($"LANDiscovery instances: {discoveries.Length}");
         foreach (var d in discoveries)
         {
             Debug.Log($"  - {d.gameObject.name} (Active: {d.gameObject.activeInHierarchy})");
         }
 
-        var networkManagers = FindObjectsOfType<LANNetworkManager>();
+        var networkManagers = Resources.FindObjectsOfTypeAll<LANNetworkManager>();
         Debug.Log($"LANNetworkManager instances: {networkManagers.Length}");
         foreach (var nm in networkManagers)
         {
             Debug.Log($"  - {nm.gameObject.name} (IsHost: {nm.IsHost})");
         }
 
-        var roomBrowsers = FindObjectsOfType<RoomBrowserUI>();
+        var roomBrowsers = Resources.FindObjectsOfTypeAll<RoomBrowserUI>();
         Debug.Log($"RoomBrowserUI instances: {roomBrowsers.Length}");
         foreach (var rb in roomBrowsers)
         {

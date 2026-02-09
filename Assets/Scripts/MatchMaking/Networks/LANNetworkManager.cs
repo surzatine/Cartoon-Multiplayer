@@ -23,7 +23,7 @@ public class LANNetworkManager : MonoBehaviour
     private void Awake()
     {
         if (networkManager == null)
-            networkManager = FindObjectOfType<NetworkManager>();
+            networkManager = FindAnyObjectByType<NetworkManager>();
 
         if (lanDiscovery == null)
             lanDiscovery = GetComponent<LANDiscovery>();

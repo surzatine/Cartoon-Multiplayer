@@ -4,8 +4,8 @@
   <Project Path="FishNet.Runtime.csproj" />
   <Project Path="Unity.InputSystem.csproj" />
   <Project Path="GameKit.Dependencies.csproj" />
-  <Project Path="Unity.FishNet.Codegen.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="Unity.FishNet.Codegen.csproj" />
   <Project Path="Unity.InputSystem.ForUI.csproj" />
   <Project Path="FishNet.Demos.csproj" />
   <Project Path="Unity.InputSystem.TestFramework.csproj" />

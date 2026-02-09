@@ -124,13 +124,13 @@ public class SetupValidator : MonoBehaviour
 
         // Try to find UI components in scene
         if (multiplayerMenu == null)
-            multiplayerMenu = FindObjectOfType<MultiplayerMenuUI>();
+            multiplayerMenu = FindAnyObjectByType<MultiplayerMenuUI>();
         
         if (hostGameUI == null)
-            hostGameUI = FindObjectOfType<HostGameUI>();
+            hostGameUI = FindAnyObjectByType<HostGameUI>();
         
         if (roomBrowserUI == null)
-            roomBrowserUI = FindObjectOfType<RoomBrowserUI>();
+            roomBrowserUI = FindAnyObjectByType<RoomBrowserUI>();
     }
 #endif
 }

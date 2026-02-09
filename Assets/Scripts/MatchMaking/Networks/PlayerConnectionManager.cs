@@ -11,10 +11,10 @@ public class PlayerConnectionManager : NetworkBehaviour
     private void Awake()
     {
         if (networkManager == null)
-            networkManager = FindObjectOfType<NetworkManager>();
+            networkManager = FindAnyObjectByType<NetworkManager>();
 
         if (lanNetworkManager == null)
-            lanNetworkManager = FindObjectOfType<LANNetworkManager>();
+            lanNetworkManager = FindAnyObjectByType<LANNetworkManager>();
     }
 
     public override void OnStartServer()
