@@ -14,7 +14,7 @@ A complete LAN multiplayer matchmaking system inspired by Mini Militia, built fo
 
 ## Requirements
 
-- Unity 2021.3 or higher
+- Unity 2021.3 or higher [ Unity 6000.3.2f1 ]
 - Fishnet Networking (install from Asset Store or GitHub)
 - TextMeshPro (auto-installed with Unity)
 
