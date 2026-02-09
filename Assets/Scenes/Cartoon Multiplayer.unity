@@ -154,9 +154,9 @@ RectTransform:
   m_Father: {fileID: 1371440815}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -17, y: 20}
+  m_SizeDelta: {x: 0, y: 20}
   m_Pivot: {x: 0, y: 0}
 --- !u!114 &21762095
 MonoBehaviour:
@@ -502,7 +502,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 557daa194b3e8f546aa4031c02dc7c49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  networkManager: {fileID: 0}
+  networkManager: {fileID: 2031195703}
 --- !u!114 &33813798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -790,7 +790,7 @@ RectTransform:
   m_Father: {fileID: 44775690}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0.9999967}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -1595,7 +1595,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 288213444}
-  - component: {fileID: 288213445}
   m_Layer: 5
   m_Name: Room List
   m_TagString: Untagged
@@ -1628,27 +1627,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &288213445
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 288213443}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ae445bd7bc98394db77f45bcf6ba6fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::RoomBrowserUI
-  lanDiscovery: {fileID: 2031195702}
-  networkManager: {fileID: 2031195703}
-  roomListContainer: {fileID: 1839363705}
-  roomItemPrefab: {fileID: 7049073547810719486, guid: 57f67ee74bd8ccf4a84d693fa30c9b62, type: 3}
-  refreshButton: {fileID: 396382251}
-  backButton: {fileID: 649390345}
-  statusText: {fileID: 679584950}
-  noRoomsText: {fileID: 29346648}
-  roomExpiryTime: 5
 --- !u!1 &325452373
 GameObject:
   m_ObjectHideFlags: 0
@@ -4107,9 +4085,9 @@ RectTransform:
   m_Father: {fileID: 1371440815}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -17, y: -17}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &737701517
 MonoBehaviour:
@@ -4841,6 +4819,60 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 892516966}
   m_CullTransparentMesh: 1
+--- !u!1 &910396874
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910396875}
+  - component: {fileID: 910396876}
+  m_Layer: 0
+  m_Name: RoomUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910396875
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910396874}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2050401053}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &910396876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910396874}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ae445bd7bc98394db77f45bcf6ba6fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RoomBrowserUI
+  lanDiscovery: {fileID: 2031195702}
+  networkManager: {fileID: 2031195703}
+  menuUIManager: {fileID: 2050401054}
+  roomListContainer: {fileID: 1839363705}
+  roomItemPrefab: {fileID: 7049073547810719486, guid: 57f67ee74bd8ccf4a84d693fa30c9b62, type: 3}
+  refreshButton: {fileID: 396382251}
+  backButton: {fileID: 649390345}
+  statusText: {fileID: 679584950}
+  noRoomsText: {fileID: 29346648}
+  roomExpiryTime: 5
 --- !u!1 &936780313
 GameObject:
   m_ObjectHideFlags: 0
@@ -5416,6 +5448,60 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1105150046}
   m_CullTransparentMesh: 1
+--- !u!1 &1112996788
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1112996789}
+  - component: {fileID: 1112996790}
+  m_Layer: 0
+  m_Name: MainMenu
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1112996789
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1112996788}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2050401053}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1112996790
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1112996788}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 21ab58d09e618674682c5091e4c86b4e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MultiplayerMenuUI
+  networkManager: {fileID: 2031195703}
+  hostGamePanel: {fileID: 1259776579}
+  roomBrowserPanel: {fileID: 288213443}
+  mainMenuPanel: {fileID: 1256906560}
+  hostGameButton: {fileID: 739546162}
+  joinGameButton: {fileID: 45505439}
+  quickJoinButton: {fileID: 629872677}
+  backButton: {fileID: 2019610787}
+  connectionStatusText: {fileID: 2083955111}
+  connectedIndicator: {fileID: 2083955109}
 --- !u!1 &1126227560
 GameObject:
   m_ObjectHideFlags: 0
@@ -5785,7 +5871,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1256906561}
-  - component: {fileID: 1256906562}
   m_Layer: 5
   m_Name: MainMenu
   m_TagString: Untagged
@@ -5819,28 +5904,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1256906562
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1256906560}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 21ab58d09e618674682c5091e4c86b4e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MultiplayerMenuUI
-  networkManager: {fileID: 2031195703}
-  hostGamePanel: {fileID: 1259776579}
-  roomBrowserPanel: {fileID: 288213443}
-  mainMenuPanel: {fileID: 1256906560}
-  hostGameButton: {fileID: 739546162}
-  joinGameButton: {fileID: 45505439}
-  quickJoinButton: {fileID: 629872677}
-  backButton: {fileID: 2019610787}
-  connectionStatusText: {fileID: 2083955111}
-  connectedIndicator: {fileID: 2083955109}
 --- !u!1 &1259776579
 GameObject:
   m_ObjectHideFlags: 0
@@ -5850,7 +5913,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1259776580}
-  - component: {fileID: 1259776581}
   m_Layer: 5
   m_Name: HostGamePanel
   m_TagString: Untagged
@@ -5887,41 +5949,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1259776581
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1259776579}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f5afde7f6d8bb394895d7e362350ee37, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HostGameUI
-  networkManager: {fileID: 2031195703}
-  roomNameInput: {fileID: 809417708}
-  hostNameInput: {fileID: 325452375}
-  maxPlayersDropdown: {fileID: 1683133570}
-  mapDropdown: {fileID: 997141669}
-  gameModeDropdown: {fileID: 1900919201}
-  hostButton: {fileID: 638028364}
-  cancelButton: {fileID: 1689987436}
-  ipAddressText: {fileID: 1914737833}
-  statusText: {fileID: 585012246}
-  defaultRoomName: My Room
-  defaultHostName: Player
-  availableMaps:
-  - Desert
-  - Urban
-  - Forest
-  - Snow
-  availableGameModes:
-  - Deathmatch
-  - Team Deathmatch
-  - Capture The Flag
-  - Custom
-  playerCountOptions: 020000000400000006000000080000000a0000000c000000
 --- !u!1 &1304035734
 GameObject:
   m_ObjectHideFlags: 0
@@ -6327,64 +6354,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1371440814}
   m_CullTransparentMesh: 1
---- !u!1 &1462932219
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1462932220}
-  - component: {fileID: 1462932222}
-  - component: {fileID: 1462932221}
-  m_Layer: 0
-  m_Name: Lobby
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1462932220
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1462932219}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 960, y: 540, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1501340813}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1462932221
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1462932219}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b3f4b3abd66f85148bd03b8b895486b0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::JoinByIP
-  ipInputField: {fileID: 0}
---- !u!114 &1462932222
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1462932219}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bef0d8a60696a21449aadc38664aa303, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HostGame
 --- !u!1 &1492639174
 GameObject:
   m_ObjectHideFlags: 0
@@ -6523,8 +6492,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2031195701}
+  - {fileID: 2050401053}
   - {fileID: 33813796}
-  - {fileID: 1462932220}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1515999833
@@ -6742,6 +6711,74 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1551773118}
   m_CullTransparentMesh: 1
+--- !u!1 &1574465147
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1574465148}
+  - component: {fileID: 1574465149}
+  m_Layer: 0
+  m_Name: HostUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1574465148
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1574465147}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2050401053}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1574465149
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1574465147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5afde7f6d8bb394895d7e362350ee37, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HostGameUI
+  networkManager: {fileID: 2031195703}
+  menuUIManager: {fileID: 2050401054}
+  roomNameInput: {fileID: 809417708}
+  hostNameInput: {fileID: 325452375}
+  maxPlayersDropdown: {fileID: 1683133570}
+  mapDropdown: {fileID: 997141669}
+  gameModeDropdown: {fileID: 1900919201}
+  hostButton: {fileID: 638028364}
+  cancelButton: {fileID: 1689987436}
+  ipAddressText: {fileID: 1914737833}
+  statusText: {fileID: 585012246}
+  defaultRoomName: My Room
+  defaultHostName: Player
+  availableMaps:
+  - Desert
+  - Urban
+  - Forest
+  - Snow
+  availableGameModes:
+  - Deathmatch
+  - Team Deathmatch
+  - Capture The Flag
+  - Custom
+  playerCountOptions: 020000000400000006000000080000000a0000000c000000
 --- !u!1 &1579220598
 GameObject:
   m_ObjectHideFlags: 0
@@ -9045,7 +9082,7 @@ RectTransform:
   m_Father: {fileID: 1525942540}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -9367,6 +9404,56 @@ MonoBehaviour:
   broadcastPort: 47777
   serverPort: 7770
   runOnStart: 0
+--- !u!1 &2050401052
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2050401053}
+  - component: {fileID: 2050401054}
+  m_Layer: 0
+  m_Name: MenuUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2050401053
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2050401052}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1112996789}
+  - {fileID: 1574465148}
+  - {fileID: 910396875}
+  m_Father: {fileID: 1501340813}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2050401054
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2050401052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4ff5825d8e8a334782f296928d05b3b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MenuUIManager
+  mainMenu: {fileID: 1256906560}
+  hostMenu: {fileID: 1259776579}
+  roomMenu: {fileID: 288213443}
 --- !u!1 &2065209799
 GameObject:
   m_ObjectHideFlags: 0
@@ -9890,9 +9977,9 @@ RectTransform:
   m_Father: {fileID: 1371440815}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 1, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 20, y: -17}
+  m_SizeDelta: {x: 20, y: 0}
   m_Pivot: {x: 1, y: 1}
 --- !u!114 &2107782154
 MonoBehaviour:
@@ -9938,7 +10025,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 127206173}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999967
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:

@@ -6,6 +6,7 @@ public class HostGameUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private LANNetworkManager networkManager;
+    [SerializeField] private MenuUIManager menuUIManager;
 
     [Header("UI Input Fields")]
     [SerializeField] private TMP_InputField roomNameInput;
@@ -137,7 +138,10 @@ public class HostGameUI : MonoBehaviour
     private void OnCancelButtonClicked()
     {
         // Return to main menu or close panel
-        gameObject.SetActive(false);
+        networkManager.Disconnect();
+        //gameObject.SetActive(false);
+        menuUIManager.ShowMainMenu();
+
     }
 
     private void UpdateIPAddress()

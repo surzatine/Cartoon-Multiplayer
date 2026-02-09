@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class MultiplayerMenuUI : MonoBehaviour
 {
@@ -70,8 +71,8 @@ public class MultiplayerMenuUI : MonoBehaviour
     private void OnBackClicked()
     {
         // Return to main game menu
-        // UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
-        Application.Quit();
+         SceneManager.LoadScene(SceneConstant.MENUSCENE);
+        //Application.Quit();
     }
 
     #endregion
