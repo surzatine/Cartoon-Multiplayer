@@ -67,6 +67,8 @@ public class LobbyManager : NetworkBehaviour
 
     private void Update()
     {
+        if(!MenuUIManager.IsLobbyMenuActive) return;
+        // Only run on server
         if (!IsServerInitialized) return;
 
         // Handle countdown
@@ -80,8 +82,11 @@ public class LobbyManager : NetworkBehaviour
             }
             else
             {
-                // Notify clients of countdown tick
-                UpdateCountdownObserversRpc(countdownTimer);
+                // Notify clients of countdown tick every frame is overkill, do it every 0.1s
+                if (Time.frameCount % 6 == 0) // ~10 times per second at 60fps
+                {
+                    UpdateCountdownObserversRpc(countdownTimer);
+                }
             }
         }
     }
@@ -418,7 +423,9 @@ public class LobbyManager : NetworkBehaviour
 
     public LobbyPlayer? GetLocalPlayer()
     {
-        if (!IsClientInitialized) return null;
+        // Check if client is initialized and has a connection
+        if (!IsClientInitialized || ClientManager == null || ClientManager.Connection == null) 
+            return null;
 
         int localClientId = ClientManager.Connection.ClientId;
         

@@ -7,6 +7,7 @@ public class MultiplayerMenuUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private LANNetworkManager networkManager;
+    [SerializeField] private MenuUIManager menuUIManager;
     [SerializeField] private GameObject hostGamePanel;
     [SerializeField] private GameObject roomBrowserPanel;
     [SerializeField] private GameObject mainMenuPanel;
@@ -84,6 +85,8 @@ public class MultiplayerMenuUI : MonoBehaviour
         SetPanelActive(mainMenuPanel, true);
         SetPanelActive(hostGamePanel, false);
         SetPanelActive(roomBrowserPanel, false);
+
+        menuUIManager.ShowMainMenu();
     }
 
     private void ShowHostPanel()

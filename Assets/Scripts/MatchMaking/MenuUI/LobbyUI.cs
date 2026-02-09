@@ -99,6 +99,10 @@ public class LobbyUI : MonoBehaviour
 
     private void Update()
     {
+        // Wait for lobby manager to be initialized
+        if (lobbyManager == null || !lobbyManager.IsClientInitialized)
+            return;
+
         UpdatePlayerList();
         UpdateButtonStates();
     }
@@ -212,7 +216,7 @@ public class LobbyUI : MonoBehaviour
         // Update ready status
         TMP_Text statusText = item.transform.Find("ReadyStatus")?.GetComponent<TMP_Text>();
         Image statusIcon = item.transform.Find("ReadyIcon")?.GetComponent<Image>();
-        
+
         if (statusText != null)
         {
             if (player.isHost)
@@ -233,8 +237,20 @@ public class LobbyUI : MonoBehaviour
     {
         if (lobbyManager == null) return;
 
-        bool isHost = lobbyManager.IsLocalPlayerHost();
-        bool isReady = lobbyManager.IsLocalPlayerReady();
+        // Get local player state safely
+        bool isHost = false;
+        bool isReady = false;
+
+        try
+        {
+            isHost = lobbyManager.IsLocalPlayerHost();
+            isReady = lobbyManager.IsLocalPlayerReady();
+        }
+        catch
+        {
+            // Client not fully initialized yet, skip this frame
+            return;
+        }
 
         // Update ready button
         if (readyButton != null && readyButtonText != null)
@@ -264,7 +280,7 @@ public class LobbyUI : MonoBehaviour
         {
             int readyCount = lobbyManager.GetReadyPlayerCount();
             int totalCount = lobbyManager.LobbyPlayers.Count;
-            
+
             if (isHost)
             {
                 statusText.text = $"Waiting for players... ({readyCount}/{totalCount} ready)";
