@@ -262,17 +262,17 @@ public class GameManager : NetworkBehaviour
         {
             // Get killer's team
             var killerObj = spawner.GetSpawnedPlayers()[killerId];
-            //if (killerObj.TryGetComponent(out NetworkedPlayerEnhanced killer))
-            //{
-            //    int killerTeam = killer.GetTeamId();
-                
-            //    if (killerTeam == 1)
-            //        teamAScore++;
-            //    else if (killerTeam == 2)
-            //        teamBScore++;
+            if (killerObj.TryGetComponent(out NetworkedPlayerEnhanced killer))
+            {
+                int killerTeam = killer.GetTeamId();
 
-            //    UpdateTeamScoresObserversRpc(teamAScore, teamBScore);
-            //}
+                if (killerTeam == 1)
+                    teamAScore++;
+                else if (killerTeam == 2)
+                    teamBScore++;
+
+                UpdateTeamScoresObserversRpc(teamAScore, teamBScore);
+            }
         }
 
         KillRegisteredObserversRpc(killerId, victimId);
