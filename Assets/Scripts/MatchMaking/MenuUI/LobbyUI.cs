@@ -1,11 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
-using FishNet.Object;
 
 /// <summary>
-/// UI Manager for the lobby waiting room
+/// Complete lobby UI with waiting room countdown and player ready system
+/// Works with panel-based MenuUIManager
 /// </summary>
 public class LobbyUI : MonoBehaviour
 {
@@ -13,13 +13,13 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] private LobbyManager lobbyManager;
     [SerializeField] private LANNetworkManager networkManager;
     [SerializeField] private MenuUIManager menuUIManager;
-    [SerializeField] private LobbyInitializer lobbyInitializer;
 
     [Header("UI - Room Info")]
     [SerializeField] private TMP_Text roomNameText;
     [SerializeField] private TMP_Text playerCountText;
     [SerializeField] private TMP_Text mapNameText;
     [SerializeField] private TMP_Text gameModeText;
+    [SerializeField] private TMP_Text roomIdText;
 
     [Header("UI - Player List")]
     [SerializeField] private Transform playerListContainer;
@@ -30,17 +30,24 @@ public class LobbyUI : MonoBehaviour
     [SerializeField] private Button startGameButton;
     [SerializeField] private Button leaveButton;
     [SerializeField] private TMP_Text readyButtonText;
+    [SerializeField] private TMP_Text startButtonText;
 
     [Header("UI - Status")]
     [SerializeField] private TMP_Text statusText;
     [SerializeField] private TMP_Text countdownText;
     [SerializeField] private GameObject countdownPanel;
+    [SerializeField] private Image countdownProgressBar;
+
+    [Header("UI - Waiting Indicator")]
+    [SerializeField] private GameObject waitingIndicator;
+    [SerializeField] private TMP_Text waitingText;
 
     private Dictionary<int, GameObject> playerListItems = new Dictionary<int, GameObject>();
+    private float initialCountdown = 0f;
 
-    private void Start()
+    private void OnEnable()
     {
-        Debug.Log($"[Lobby UI] Start");
+        Debug.Log("[CompleteLobbyUI] Lobby UI enabled");
 
         if (lobbyManager == null)
             lobbyManager = FindAnyObjectByType<LobbyManager>();
@@ -48,38 +55,47 @@ public class LobbyUI : MonoBehaviour
         if (networkManager == null)
             networkManager = FindAnyObjectByType<LANNetworkManager>();
 
+        if (menuUIManager == null)
+            menuUIManager = FindAnyObjectByType<MenuUIManager>();
+
         SetupUI();
         SubscribeToEvents();
         UpdateRoomInfo();
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
         UnsubscribeFromEvents();
+        ClearPlayerList();
     }
 
     private void SetupUI()
     {
-        Debug.Log($"[Lobby UI] Setup UI {leaveButton == null}");
-
         // Setup buttons
         if (readyButton != null)
+        {
+            readyButton.onClick.RemoveAllListeners();
             readyButton.onClick.AddListener(OnReadyButtonClicked);
+        }
 
         if (startGameButton != null)
         {
+            startGameButton.onClick.RemoveAllListeners();
             startGameButton.onClick.AddListener(OnStartGameButtonClicked);
-            startGameButton.gameObject.SetActive(false); // Only show for host
+            startGameButton.gameObject.SetActive(false);
         }
 
         if (leaveButton != null)
         {
-            Debug.Log("[Lobby UI] Setup leave button");
+            leaveButton.onClick.RemoveAllListeners();
             leaveButton.onClick.AddListener(OnLeaveButtonClicked);
         }
 
         if (countdownPanel != null)
             countdownPanel.SetActive(false);
+
+        if (waitingIndicator != null)
+            waitingIndicator.SetActive(false);
     }
 
     private void SubscribeToEvents()
@@ -108,14 +124,12 @@ public class LobbyUI : MonoBehaviour
 
     private void Update()
     {
-        //if(!LobbyManager.IsLobbyActive) return;
-        if(!MenuUIManager.IsLobbyMenuActive) return;
-        // Wait for lobby manager to be initialized
-        if (lobbyManager == null || !lobbyManager.IsClientInitialized)
-            return;
+        if (!LobbyManager.IsLobbyActive) return;
+        if (lobbyManager == null || !lobbyManager.IsClientInitialized) return;
 
         UpdatePlayerList();
         UpdateButtonStates();
+        UpdateWaitingIndicator();
     }
 
     #region UI Updates
@@ -128,13 +142,16 @@ public class LobbyUI : MonoBehaviour
         var room = networkManager.CurrentRoom;
 
         if (roomNameText != null)
-            roomNameText.text = room.roomName;
+            roomNameText.text = $"Room: {room.roomName}";
 
         if (mapNameText != null)
             mapNameText.text = $"Map: {room.mapName}";
 
         if (gameModeText != null)
-            gameModeText.text = room.gameMode;
+            gameModeText.text = $"Mode: {room.gameMode}";
+
+        if (roomIdText != null)
+            roomIdText.text = $"Room ID: {room.roomId.Substring(0, 8)}...";
 
         UpdatePlayerCount();
     }
@@ -153,13 +170,11 @@ public class LobbyUI : MonoBehaviour
     {
         if (lobbyManager == null || playerListContainer == null) return;
 
-        // Get current player IDs
         HashSet<int> currentPlayerIds = new HashSet<int>();
         foreach (var player in lobbyManager.LobbyPlayers)
         {
             currentPlayerIds.Add(player.clientId);
 
-            // Create or update player list item
             if (!playerListItems.ContainsKey(player.clientId))
             {
                 CreatePlayerListItem(player);
@@ -194,7 +209,7 @@ public class LobbyUI : MonoBehaviour
 
     private void CreatePlayerListItem(LobbyPlayer player)
     {
-        if (playerListItemPrefab == null || playerListContainer == null)
+            if (playerListItemPrefab == null || playerListContainer == null)
             return;
 
         GameObject item = Instantiate(playerListItemPrefab, playerListContainer);
@@ -220,7 +235,7 @@ public class LobbyUI : MonoBehaviour
         {
             string displayName = player.playerName;
             if (player.isHost)
-                displayName += " (Host)";
+                displayName += " ★"; // Star for host
             nameText.text = displayName;
         }
 
@@ -231,11 +246,15 @@ public class LobbyUI : MonoBehaviour
         if (statusText != null)
         {
             if (player.isHost)
+            {
                 statusText.text = "HOST";
+                statusText.color = new Color(1f, 0.84f, 0f); // Gold
+            }
             else
+            {
                 statusText.text = player.isReady ? "READY" : "NOT READY";
-
-            statusText.color = player.isReady || player.isHost ? Color.green : Color.yellow;
+                statusText.color = player.isReady ? Color.green : Color.yellow;
+            }
         }
 
         if (statusIcon != null)
@@ -248,7 +267,6 @@ public class LobbyUI : MonoBehaviour
     {
         if (lobbyManager == null) return;
 
-        // Get local player state safely
         bool isHost = false;
         bool isReady = false;
 
@@ -259,7 +277,6 @@ public class LobbyUI : MonoBehaviour
         }
         catch
         {
-            // Client not fully initialized yet, skip this frame
             return;
         }
 
@@ -273,17 +290,23 @@ public class LobbyUI : MonoBehaviour
             else
             {
                 readyButton.gameObject.SetActive(true);
-                readyButtonText.text = isReady ? "UNREADY" : "READY";
-                readyButton.interactable = true;
+                readyButtonText.text = isReady ? "CANCEL READY" : "READY";
+                readyButton.interactable = !lobbyManager.IsCountingDown;
+
+                // Change button color based on state
+                var colors = readyButton.colors;
+                colors.normalColor = isReady ? new Color(1f, 0.5f, 0f) : Color.green;
+                readyButton.colors = colors;
             }
         }
 
         // Update start game button (host only)
-        if (startGameButton != null)
+        if (startGameButton != null && startButtonText != null)
         {
             startGameButton.gameObject.SetActive(isHost);
             int playerCount = lobbyManager.LobbyPlayers.Count;
-            startGameButton.interactable = playerCount >= 2; // Minimum 2 players
+            startGameButton.interactable = playerCount >= 2 && !lobbyManager.IsCountingDown;
+            startButtonText.text = playerCount >= 2 ? "START GAME" : $"NEED {2 - playerCount} MORE";
         }
 
         // Update status text
@@ -294,13 +317,57 @@ public class LobbyUI : MonoBehaviour
 
             if (isHost)
             {
-                statusText.text = $"Waiting for players... ({readyCount}/{totalCount} ready)";
+                if (totalCount < 2)
+                {
+                    statusText.text = "Waiting for more players to join...";
+                    statusText.color = Color.yellow;
+                }
+                else
+                {
+                    statusText.text = $"Ready: {readyCount}/{totalCount} players";
+                    statusText.color = Color.white;
+                }
             }
             else
             {
-                statusText.text = isReady ? "Waiting for host to start..." : "Click Ready when you're prepared!";
+                if (isReady)
+                {
+                    statusText.text = "Waiting for host to start the game...";
+                    statusText.color = Color.cyan;
+                }
+                else
+                {
+                    statusText.text = "Click READY when you're prepared!";
+                    statusText.color = Color.yellow;
+                }
             }
         }
+    }
+
+    private void UpdateWaitingIndicator()
+    {
+        if (waitingIndicator == null) return;
+
+        bool shouldShow = lobbyManager != null &&
+                         lobbyManager.LobbyPlayers.Count < 2;
+
+        waitingIndicator.SetActive(shouldShow);
+
+        if (shouldShow && waitingText != null)
+        {
+            waitingText.text = "Waiting for players to join...\n" +
+                             $"({lobbyManager.LobbyPlayers.Count}/2 minimum)";
+        }
+    }
+
+    private void ClearPlayerList()
+    {
+        foreach (var item in playerListItems.Values)
+        {
+            if (item != null)
+                Destroy(item);
+        }
+        playerListItems.Clear();
     }
 
     #endregion
@@ -309,42 +376,65 @@ public class LobbyUI : MonoBehaviour
 
     private void OnPlayerJoined(LobbyPlayer player)
     {
-        Debug.Log($"[Lobby UI] Player joined: {player.playerName}");
+        Debug.Log($"[CompleteLobbyUI] Player joined: {player.playerName}");
         UpdatePlayerList();
+
+        //Play join sound / animation here if desired
     }
 
     private void OnPlayerLeft(LobbyPlayer player)
     {
-        Debug.Log($"[Lobby UI] Player left: {player.playerName}");
+        Debug.Log($"[CompleteLobbyUI] Player left: {player.playerName}");
         UpdatePlayerList();
     }
 
     private void OnPlayerReadyChanged(LobbyPlayer player)
     {
-        Debug.Log($"[Lobby UI] Player ready changed: {player.playerName} = {player.isReady}");
+        Debug.Log($"[CompleteLobbyUI] Player ready changed: {player.playerName} = {player.isReady}");
         UpdatePlayerListItem(player);
     }
 
     private void OnCountdownTick(float timeRemaining)
     {
         if (countdownPanel != null)
-            countdownPanel.SetActive(true);
+            countdownPanel.SetActive(timeRemaining > 0);
 
-        if (countdownText != null)
+        if (countdownText != null && timeRemaining > 0)
         {
             countdownText.text = $"Starting in {Mathf.CeilToInt(timeRemaining)}...";
         }
 
-        if (statusText != null)
+        // Update progress bar
+        if (countdownProgressBar != null && timeRemaining > 0)
+        {
+            if (initialCountdown == 0)
+                initialCountdown = timeRemaining;
+
+            float progress = timeRemaining / initialCountdown;
+            countdownProgressBar.fillAmount = progress;
+        }
+        else if (timeRemaining <= 0)
+        {
+            initialCountdown = 0;
+        }
+
+        // Update status text
+        if (statusText != null && timeRemaining > 0)
         {
             statusText.text = "Game starting soon!";
+            statusText.color = Color.green;
         }
     }
 
     private void OnGameStarting()
     {
+        Debug.Log("[CompleteLobbyUI] Game is starting!");
+
         if (statusText != null)
+        {
             statusText.text = "Loading game...";
+            statusText.color = Color.green;
+        }
 
         // Disable all buttons
         if (readyButton != null)
@@ -353,6 +443,13 @@ public class LobbyUI : MonoBehaviour
             startGameButton.interactable = false;
         if (leaveButton != null)
             leaveButton.interactable = false;
+
+        // Show loading indicator
+        if (waitingIndicator != null)
+            waitingIndicator.SetActive(true);
+
+        if (waitingText != null)
+            waitingText.text = "Loading game...";
     }
 
     #endregion
@@ -364,6 +461,7 @@ public class LobbyUI : MonoBehaviour
         if (lobbyManager != null)
         {
             lobbyManager.ToggleReadyServerRpc();
+            Debug.Log("[CompleteLobbyUI] Ready button clicked");
         }
     }
 
@@ -372,21 +470,25 @@ public class LobbyUI : MonoBehaviour
         if (lobbyManager != null)
         {
             lobbyManager.ForceStartGameServerRpc();
+            Debug.Log("[CompleteLobbyUI] Start game button clicked");
         }
     }
 
     private void OnLeaveButtonClicked()
     {
-        Debug.Log("[Lobby UI] Leaving lobby...");
-        // Disconnect and return to main menu
+        Debug.Log("[CompleteLobbyUI] Leaving lobby...");
+
+        // Disconnect from network
         if (networkManager != null)
         {
             networkManager.Disconnect();
         }
 
-        // Load main menu scene
-        menuUIManager.ShowMainMenu();
-        //UnityEngine.SceneManagement.SceneManager.LoadScene("MultiplayerMenu");
+        // Return to main menu
+        if (menuUIManager != null)
+        {
+            menuUIManager.ShowMainMenu();
+        }
     }
 
     #endregion
