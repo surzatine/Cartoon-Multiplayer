@@ -27,6 +27,8 @@ public class LobbyInitializer : MonoBehaviour
     {
         float waitTime = 0f;
 
+        Debug.Log("[X] InitializeLobbyManager...");
+
         // Wait for lobby manager to be ready
         while (lobbyManager == null || !lobbyManager.IsClientInitialized)
         {
@@ -47,6 +49,8 @@ public class LobbyInitializer : MonoBehaviour
             yield return null;
         }
 
+        Debug.Log("[X] Initialize LobbyUI...");
+
         // Wait for client connection
         while (lobbyManager != null && lobbyManager.ClientManager != null && 
                lobbyManager.ClientManager.Connection == null)
@@ -62,6 +66,9 @@ public class LobbyInitializer : MonoBehaviour
             yield return null;
         }
 
+
+        Debug.Log("[X] Finalize LobbyUI...");
+
         // Wait one more frame to ensure everything is settled
         yield return new WaitForEndOfFrame();
 
@@ -73,6 +80,8 @@ public class LobbyInitializer : MonoBehaviour
         }
 
         isInitialized = true;
+
+        Debug.Log("[X] Complete LobbyUI...");
     }
 
     public bool IsInitialized => isInitialized;

@@ -7,16 +7,12 @@ public class MenuUIManager : MonoBehaviour
     [SerializeField] private GameObject roomMenu;
     [SerializeField] private GameObject lobbyMenu;
 
-    public static bool IsLobbyMenuActive;
-
     private void DisableMenu()
     {
         mainMenu.SetActive(false);
         hostMenu.SetActive(false);
         roomMenu.SetActive(false);
         lobbyMenu.SetActive(false);
-
-        IsLobbyMenuActive = false;
     }
     
     public void ShowMainMenu()
@@ -41,7 +37,5 @@ public class MenuUIManager : MonoBehaviour
     {
         DisableMenu();
         lobbyMenu.SetActive(true);
-
-        IsLobbyMenuActive = true;
     }
 }

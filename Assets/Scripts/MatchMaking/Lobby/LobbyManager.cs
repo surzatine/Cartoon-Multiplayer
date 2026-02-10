@@ -1,26 +1,28 @@
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using FishNet.Connection;
-using FishNet.Managing.Scened;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 
 /// <summary>
-/// Manages the lobby waiting room where players wait before game starts
+/// Complete lobby manager with waiting room and multi-room isolation
 /// </summary>
 public class LobbyManager : NetworkBehaviour
 {
-    [Header("Scene Settings")]
-    [SerializeField] private string gameSceneName = "GameScene";
+    [Header("Game Settings")]
     [SerializeField] private int minPlayersToStart = 2;
-    [SerializeField] private float autoStartCountdown = 5f;
+    [SerializeField] private float autoStartCountdown = 10f;
+    [SerializeField] private float waitingTimeBeforeStart = 5f;
 
     [Header("References")]
     [SerializeField] private LANNetworkManager lanNetworkManager;
+    [SerializeField] private MenuUIManager menuUIManager;
 
-    // Synced list of players in lobby
-    //[SyncObject]
+    // Room ID for isolation - each lobby instance has unique room
+    private string roomId;
+
+    // Synced list of players in THIS lobby
     private readonly SyncList<LobbyPlayer> lobbyPlayers = new SyncList<LobbyPlayer>();
 
     // Events
@@ -32,34 +34,45 @@ public class LobbyManager : NetworkBehaviour
 
     private bool isCountingDown = false;
     private float countdownTimer = 0f;
+    private bool gameStarted = false;
 
     public IReadOnlyList<LobbyPlayer> LobbyPlayers => lobbyPlayers;
     public bool IsCountingDown => isCountingDown;
     public float CountdownTimer => countdownTimer;
+    public string RoomId => roomId;
 
-    // Static flag to indicate if lobby menu is active (used for UI updates)
-    public static bool IsLobbyActive = false;
+    public static bool IsLobbyActive;
 
     private void Awake()
     {
         if (lanNetworkManager == null)
             lanNetworkManager = FindAnyObjectByType<LANNetworkManager>();
+
+        if (menuUIManager == null)
+            menuUIManager = FindAnyObjectByType<MenuUIManager>();
+
+        // Generate unique room ID
+        roomId = System.Guid.NewGuid().ToString();
     }
 
     public override void OnStartServer()
     {
         base.OnStartServer();
-        Debug.Log("Lobby Manager started on server");
+
+        // Get room ID from current room data if available
+        if (lanNetworkManager != null && lanNetworkManager.CurrentRoom != null)
+        {
+            roomId = lanNetworkManager.CurrentRoom.roomId;
+        }
+
+        Debug.Log($"[LobbyManager] Started on server for room: {roomId}");
     }
 
     public override void OnStartClient()
     {
         base.OnStartClient();
-        
-        // Subscribe to sync list changes
         lobbyPlayers.OnChange += OnLobbyPlayersChanged;
-        
-        Debug.Log("Lobby Manager started on client");
+        Debug.Log($"[LobbyManager] Started on client for room: {roomId}");
     }
 
     public override void OnStopClient()
@@ -70,23 +83,23 @@ public class LobbyManager : NetworkBehaviour
 
     private void Update()
     {
-        if(!MenuUIManager.IsLobbyMenuActive) return;
-        // Only run on server
+        if (!IsLobbyActive) return;
         if (!IsServerInitialized) return;
+        if (gameStarted) return;
 
         // Handle countdown
         if (isCountingDown)
         {
             countdownTimer -= Time.deltaTime;
-            
+
             if (countdownTimer <= 0f)
             {
                 StartGame();
             }
             else
             {
-                // Notify clients of countdown tick every frame is overkill, do it every 0.1s
-                if (Time.frameCount % 6 == 0) // ~10 times per second at 60fps
+                // Update countdown every 0.1 seconds
+                if (Time.frameCount % 6 == 0)
                 {
                     UpdateCountdownObserversRpc(countdownTimer);
                 }
@@ -107,7 +120,7 @@ public class LobbyManager : NetworkBehaviour
         {
             if (player.clientId == conn.ClientId)
             {
-                Debug.LogWarning($"Player {conn.ClientId} already in lobby");
+                Debug.LogWarning($"[LobbyManager {roomId}] Player {conn.ClientId} already in lobby");
                 return;
             }
         }
@@ -117,11 +130,11 @@ public class LobbyManager : NetworkBehaviour
             clientId = conn.ClientId,
             playerName = playerName,
             isReady = false,
-            isHost = conn.ClientId == 0 // First player is host
+            isHost = lobbyPlayers.Count == 0 // First player is host
         };
 
         lobbyPlayers.Add(newPlayer);
-        Debug.Log($"Player {playerName} (ID: {conn.ClientId}) joined lobby");
+        Debug.Log($"[LobbyManager {roomId}] Player {playerName} (ID: {conn.ClientId}) joined lobby");
 
         // Update player count in room
         if (lanNetworkManager != null)
@@ -155,7 +168,7 @@ public class LobbyManager : NetworkBehaviour
         if (indexToRemove >= 0)
         {
             lobbyPlayers.RemoveAt(indexToRemove);
-            Debug.Log($"Player {playerToRemove.playerName} left lobby");
+            Debug.Log($"[LobbyManager {roomId}] Player {playerToRemove.playerName} left lobby");
 
             // Update player count
             if (lanNetworkManager != null)
@@ -189,7 +202,8 @@ public class LobbyManager : NetworkBehaviour
         firstPlayer.isHost = true;
         lobbyPlayers[0] = firstPlayer;
 
-        Debug.Log($"New host assigned: {firstPlayer.playerName}");
+        Debug.Log($"[LobbyManager {roomId}] New host assigned: {firstPlayer.playerName}");
+        NotifyHostChangedObserversRpc(firstPlayer.clientId);
     }
 
     #endregion
@@ -210,7 +224,7 @@ public class LobbyManager : NetworkBehaviour
                 player.isReady = !player.isReady;
                 lobbyPlayers[i] = player;
 
-                Debug.Log($"Player {player.playerName} ready state: {player.isReady}");
+                Debug.Log($"[LobbyManager {roomId}] Player {player.playerName} ready state: {player.isReady}");
 
                 // Notify clients
                 PlayerReadyChangedObserversRpc(player);
@@ -234,7 +248,7 @@ public class LobbyManager : NetworkBehaviour
         bool allReady = true;
         foreach (var player in lobbyPlayers)
         {
-            if (!player.isReady && !player.isHost) // Host doesn't need to ready
+            if (!player.isReady && !player.isHost)
             {
                 allReady = false;
                 break;
@@ -274,13 +288,13 @@ public class LobbyManager : NetworkBehaviour
 
         if (!isHost)
         {
-            Debug.LogWarning("Non-host tried to force start game");
+            Debug.LogWarning($"[LobbyManager {roomId}] Non-host tried to force start game");
             return;
         }
 
         if (lobbyPlayers.Count < minPlayersToStart)
         {
-            Debug.LogWarning($"Not enough players to start. Need {minPlayersToStart}, have {lobbyPlayers.Count}");
+            Debug.LogWarning($"[LobbyManager {roomId}] Not enough players to start. Need {minPlayersToStart}, have {lobbyPlayers.Count}");
             return;
         }
 
@@ -294,8 +308,8 @@ public class LobbyManager : NetworkBehaviour
 
         isCountingDown = true;
         countdownTimer = autoStartCountdown;
-        
-        Debug.Log($"Starting countdown: {autoStartCountdown} seconds");
+
+        Debug.Log($"[LobbyManager {roomId}] Starting countdown: {autoStartCountdown} seconds");
         StartCountdownObserversRpc(autoStartCountdown);
     }
 
@@ -306,8 +320,8 @@ public class LobbyManager : NetworkBehaviour
 
         isCountingDown = false;
         countdownTimer = 0f;
-        
-        Debug.Log("Countdown stopped");
+
+        Debug.Log($"[LobbyManager {roomId}] Countdown stopped");
         StopCountdownObserversRpc();
     }
 
@@ -316,40 +330,31 @@ public class LobbyManager : NetworkBehaviour
     {
         if (lobbyPlayers.Count < minPlayersToStart)
         {
-            Debug.LogWarning("Cannot start game: not enough players");
+            Debug.LogWarning($"[LobbyManager {roomId}] Cannot start game: not enough players");
             return;
         }
 
-        Debug.Log("Starting game!");
+        if (gameStarted)
+        {
+            Debug.LogWarning($"[LobbyManager {roomId}] Game already started");
+            return;
+        }
+
+        Debug.Log($"[LobbyManager {roomId}] Starting game with {lobbyPlayers.Count} players!");
         isCountingDown = false;
+        gameStarted = true;
 
         // Notify all clients game is starting
         GameStartingObserversRpc();
 
-        // Load game scene for all clients
-        LoadGameScene();
+        // Show game UI after brief delay
+        Invoke(nameof(ShowGameUI), waitingTimeBeforeStart);
     }
 
     [Server]
-    private void LoadGameScene()
+    private void ShowGameUI()
     {
-        // Create scene load data
-        SceneLoadData sld = new SceneLoadData(gameSceneName);
-        sld.ReplaceScenes = ReplaceOption.All;
-        
-        // Get all connections in lobby
-        NetworkConnection[] connections = new NetworkConnection[lobbyPlayers.Count];
-        for (int i = 0; i < lobbyPlayers.Count; i++)
-        {
-            connections[i] = ServerManager.Clients[lobbyPlayers[i].clientId];
-        }
-
-        sld.Options.AllowStacking = false;
-
-        // Load scene for specific connections only (room isolation)
-        SceneManager.LoadConnectionScenes(connections, sld);
-
-        Debug.Log($"Loading game scene '{gameSceneName}' for {connections.Length} players");
+        ShowGameUIObserversRpc();
     }
 
     #endregion
@@ -360,12 +365,14 @@ public class LobbyManager : NetworkBehaviour
     private void PlayerJoinedLobbyObserversRpc(LobbyPlayer player)
     {
         OnPlayerJoinedLobby?.Invoke(player);
+        Debug.Log($"[LobbyManager {roomId}] [Client] Player joined: {player.playerName}");
     }
 
     [ObserversRpc]
     private void PlayerLeftLobbyObserversRpc(LobbyPlayer player)
     {
         OnPlayerLeftLobby?.Invoke(player);
+        Debug.Log($"[LobbyManager {roomId}] [Client] Player left: {player.playerName}");
     }
 
     [ObserversRpc]
@@ -375,16 +382,23 @@ public class LobbyManager : NetworkBehaviour
     }
 
     [ObserversRpc]
+    private void NotifyHostChangedObserversRpc(int newHostId)
+    {
+        Debug.Log($"[LobbyManager {roomId}] [Client] New host: {newHostId}");
+    }
+
+    [ObserversRpc]
     private void StartCountdownObserversRpc(float countdown)
     {
-        Debug.Log($"Countdown started: {countdown} seconds");
+        Debug.Log($"[LobbyManager {roomId}] Countdown started: {countdown} seconds");
         OnCountdownTick?.Invoke(countdown);
     }
 
     [ObserversRpc]
     private void StopCountdownObserversRpc()
     {
-        Debug.Log("Countdown stopped");
+        Debug.Log($"[LobbyManager {roomId}] Countdown stopped");
+        OnCountdownTick?.Invoke(0f);
     }
 
     [ObserversRpc]
@@ -396,8 +410,16 @@ public class LobbyManager : NetworkBehaviour
     [ObserversRpc]
     private void GameStartingObserversRpc()
     {
-        Debug.Log("Game is starting!");
+        Debug.Log($"[LobbyManager {roomId}] Game is starting!");
         OnGameStarting?.Invoke();
+    }
+
+    [ObserversRpc]
+    private void ShowGameUIObserversRpc()
+    {
+        Debug.Log($"[LobbyManager {roomId}] Showing game UI");
+        // TODO: Load game scene or show game UI
+        // For now, just log - you'll implement your game UI here
     }
 
     #endregion
@@ -409,13 +431,13 @@ public class LobbyManager : NetworkBehaviour
         switch (op)
         {
             case SyncListOperation.Add:
-                Debug.Log($"[Client] Player added to lobby: {newPlayer.playerName}");
+                Debug.Log($"[LobbyManager {roomId}] [Client] Player added to lobby: {newPlayer.playerName}");
                 break;
             case SyncListOperation.RemoveAt:
-                Debug.Log($"[Client] Player removed from lobby: {oldPlayer.playerName}");
+                Debug.Log($"[LobbyManager {roomId}] [Client] Player removed from lobby: {oldPlayer.playerName}");
                 break;
             case SyncListOperation.Set:
-                Debug.Log($"[Client] Player updated: {newPlayer.playerName}");
+                Debug.Log($"[LobbyManager {roomId}] [Client] Player updated: {newPlayer.playerName}");
                 break;
         }
     }
@@ -426,12 +448,11 @@ public class LobbyManager : NetworkBehaviour
 
     public LobbyPlayer? GetLocalPlayer()
     {
-        // Check if client is initialized and has a connection
-        if (!IsClientInitialized || ClientManager == null || ClientManager.Connection == null) 
+        if (!IsClientInitialized || ClientManager == null || ClientManager.Connection == null)
             return null;
 
         int localClientId = ClientManager.Connection.ClientId;
-        
+
         foreach (var player in lobbyPlayers)
         {
             if (player.clientId == localClientId)
