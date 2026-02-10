@@ -198,9 +198,11 @@ public class RoomBrowserUI : MonoBehaviour
     private void OnBackButtonClicked()
     {
         StopBrowsing();
-        
-        menuUIManager.ShowMainMenu();
+
+        networkManager.Disconnect();
+
         // Load main menu or previous scene
         // UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
+        menuUIManager.ShowMainMenu();
     }
 }
