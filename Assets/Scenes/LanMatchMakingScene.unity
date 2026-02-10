@@ -6342,7 +6342,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1397867275}
   - component: {fileID: 1397867276}
-  - component: {fileID: 1397867277}
   - component: {fileID: 1397867278}
   m_Layer: 0
   m_Name: LobbyManager
@@ -6385,21 +6384,6 @@ MonoBehaviour:
   minPlayersToStart: 2
   autoStartCountdown: 5
   lanNetworkManager: {fileID: 2031195703}
---- !u!114 &1397867277
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1397867274}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8c389939a4e70de499306ce602dc53d7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LobbyInitializer
-  lobbyUI: {fileID: 7629746171143293361}
-  lobbyManager: {fileID: 1397867276}
-  maxWaitTime: 5
 --- !u!114 &1397867278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6407,7 +6391,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1397867274}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
   m_Name: 
@@ -9489,6 +9473,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LANNetworkManager
   networkManager: {fileID: 7443408888335765248}
   lanDiscovery: {fileID: 2031195702}
+  menuUIManager: {fileID: 2050401054}
   serverPort: 7770
   maxPlayers: 8
 --- !u!114 &2031195704
@@ -12880,8 +12865,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c3e1af1fab2acb46b53a8ea30c7d2bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyUI
-  lobbyManager: {fileID: 0}
+  lobbyManager: {fileID: 1397867276}
   networkManager: {fileID: 2031195703}
+  menuUIManager: {fileID: 2050401054}
+  lobbyInitializer: {fileID: 0}
   roomNameText: {fileID: 7952466505972209019}
   playerCountText: {fileID: 7853286808583447226}
   mapNameText: {fileID: 777524824033751404}

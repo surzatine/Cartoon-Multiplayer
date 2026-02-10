@@ -131,7 +131,7 @@ public class HostGameUI : MonoBehaviour
             // Optionally: Switch to lobby/game scene
             // UnityEngine.SceneManagement.SceneManager.LoadScene("Lobby");
 
-            menuUIManager.ShowLobbyMenu();
+            //menuUIManager.ShowLobbyMenu();
         }
         else
         {

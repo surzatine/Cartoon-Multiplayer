@@ -12,6 +12,8 @@ public class LobbyUI : MonoBehaviour
     [Header("References")]
     [SerializeField] private LobbyManager lobbyManager;
     [SerializeField] private LANNetworkManager networkManager;
+    [SerializeField] private MenuUIManager menuUIManager;
+    [SerializeField] private LobbyInitializer lobbyInitializer;
 
     [Header("UI - Room Info")]
     [SerializeField] private TMP_Text roomNameText;
@@ -38,6 +40,8 @@ public class LobbyUI : MonoBehaviour
 
     private void Start()
     {
+        Debug.Log($"[Lobby UI] Start");
+
         if (lobbyManager == null)
             lobbyManager = FindAnyObjectByType<LobbyManager>();
 
@@ -56,6 +60,8 @@ public class LobbyUI : MonoBehaviour
 
     private void SetupUI()
     {
+        Debug.Log($"[Lobby UI] Setup UI {leaveButton == null}");
+
         // Setup buttons
         if (readyButton != null)
             readyButton.onClick.AddListener(OnReadyButtonClicked);
@@ -67,7 +73,10 @@ public class LobbyUI : MonoBehaviour
         }
 
         if (leaveButton != null)
+        {
+            Debug.Log("[Lobby UI] Setup leave button");
             leaveButton.onClick.AddListener(OnLeaveButtonClicked);
+        }
 
         if (countdownPanel != null)
             countdownPanel.SetActive(false);
@@ -99,6 +108,8 @@ public class LobbyUI : MonoBehaviour
 
     private void Update()
     {
+        //if(!LobbyManager.IsLobbyActive) return;
+        if(!MenuUIManager.IsLobbyMenuActive) return;
         // Wait for lobby manager to be initialized
         if (lobbyManager == null || !lobbyManager.IsClientInitialized)
             return;
@@ -366,6 +377,7 @@ public class LobbyUI : MonoBehaviour
 
     private void OnLeaveButtonClicked()
     {
+        Debug.Log("[Lobby UI] Leaving lobby...");
         // Disconnect and return to main menu
         if (networkManager != null)
         {
@@ -373,7 +385,8 @@ public class LobbyUI : MonoBehaviour
         }
 
         // Load main menu scene
-        UnityEngine.SceneManagement.SceneManager.LoadScene("MultiplayerMenu");
+        menuUIManager.ShowMainMenu();
+        //UnityEngine.SceneManagement.SceneManager.LoadScene("MultiplayerMenu");
     }
 
     #endregion

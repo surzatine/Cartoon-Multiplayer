@@ -37,6 +37,9 @@ public class LobbyManager : NetworkBehaviour
     public bool IsCountingDown => isCountingDown;
     public float CountdownTimer => countdownTimer;
 
+    // Static flag to indicate if lobby menu is active (used for UI updates)
+    public static bool IsLobbyActive = false;
+
     private void Awake()
     {
         if (lanNetworkManager == null)
