@@ -83,8 +83,15 @@ public class LobbyManager : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsLobbyActive) return;
-        if (!IsServerInitialized) return;
+        try
+        {
+            if (!IsServerInitialized) return;
+        }
+        catch
+        {
+            return;
+        }
+       
         if (gameStarted) return;
 
         // Handle countdown

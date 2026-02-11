@@ -25,7 +25,7 @@ public class NetworkManagerPersistence : MonoBehaviour
         instance = this;
         persistentNetworkManager = gameObject;
 
-        Destroy(GetComponent<NetworkObject>());
+        Destroy(gameObject.GetComponent<NetworkObject>());
 
         // This is the ONLY place DontDestroyOnLoad should be called
         DontDestroyOnLoad(gameObject);

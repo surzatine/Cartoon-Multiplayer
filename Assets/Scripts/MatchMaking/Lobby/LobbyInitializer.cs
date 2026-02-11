@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using FishNet.Object;
 using System.Collections;
@@ -30,7 +31,8 @@ public class LobbyInitializer : MonoBehaviour
         Debug.Log("[X] InitializeLobbyManager...");
 
         // Wait for lobby manager to be ready
-        while (lobbyManager == null || !lobbyManager.IsClientInitialized)
+        // Exception Handling try catch
+        while (true)
         {
             // Try to find lobby manager if not assigned
             if (lobbyManager == null)
@@ -38,12 +40,26 @@ public class LobbyInitializer : MonoBehaviour
                 lobbyManager = FindAnyObjectByType<LobbyManager>();
             }
 
-            waitTime += Time.deltaTime;
+            try
+            {
+                // If we have a valid instance and it's initialized, exit loop
+                if (lobbyManager != null && lobbyManager.IsClientInitialized)
+                {
+                    break;
+                }
+            }
+            catch
+            {
+                
+            }
             
+
+            waitTime += Time.deltaTime;
+
             if (waitTime >= maxWaitTime)
             {
                 Debug.LogError("[LobbyInitializer] Timeout waiting for LobbyManager initialization!");
-                break;
+                yield break;
             }
 
             yield return null;
@@ -52,15 +68,38 @@ public class LobbyInitializer : MonoBehaviour
         Debug.Log("[X] Initialize LobbyUI...");
 
         // Wait for client connection
-        while (lobbyManager != null && lobbyManager.ClientManager != null && 
-               lobbyManager.ClientManager.Connection == null)
+        while (true)
         {
-            waitTime += Time.deltaTime;
+            if (lobbyManager == null)
+            {
+                Debug.LogError("[LobbyInitializer] LobbyManager became null while waiting for connection.");
+                yield break;
+            }
+
+            try
+            {
+                if (lobbyManager.ClientManager == null)
+                {
+                    Debug.LogWarning("[LobbyInitializer] ClientManager is null. Waiting...");
+                }
+                else if (lobbyManager.ClientManager.Connection != null)
+                {
+                    // Connection established
+                    break;
+                }
+            }
+            catch
+            {
+                
+            }
             
+
+            waitTime += Time.deltaTime;
+
             if (waitTime >= maxWaitTime)
             {
                 Debug.LogError("[LobbyInitializer] Timeout waiting for client connection!");
-                break;
+                yield break;
             }
 
             yield return null;
