@@ -125,6 +125,8 @@ public class HostGameUI : MonoBehaviour
         // Host the game
         if (networkManager != null)
         {
+            Debug.Log($"[CompleteLobbyUI] Host game: {roomName}, {hostName}, {maxPlayers}, {mapName}, {gameMode}");
+
             networkManager.HostGame(roomName, hostName, maxPlayers, mapName, gameMode);
             UpdateStatus($"Hosting: {roomName}", Color.green);
 
