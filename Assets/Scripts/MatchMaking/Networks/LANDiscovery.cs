@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using UnityEngine;
+using System.Linq;
 
 public class LANDiscovery : MonoBehaviour
 {
@@ -51,9 +52,6 @@ public class LANDiscovery : MonoBehaviour
 
     #region Server/Host Methods
 
-    /// <summary>
-    /// Start broadcasting this server's room data
-    /// </summary>
     public void StartBroadcasting(RoomData roomData)
     {
         try
@@ -62,7 +60,6 @@ public class LANDiscovery : MonoBehaviour
             broadcastClient = new UdpClient();
             broadcastClient.EnableBroadcast = true;
 
-            // Store room data for broadcasting
             PlayerPrefs.SetString("CurrentRoomData", roomData.ToJson());
 
             Debug.Log($"Started broadcasting room: {roomData.roomName}");
@@ -73,9 +70,6 @@ public class LANDiscovery : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Stop broadcasting
-    /// </summary>
     public void StopBroadcasting()
     {
         if (broadcastClient != null)
@@ -91,17 +85,12 @@ public class LANDiscovery : MonoBehaviour
 
     #region Client Methods
 
-    /// <summary>
-    /// Start listening for server broadcasts
-    /// </summary>
     public void StartListening()
     {
         try
         {
-            // Stop any existing listener first
             StopListening();
 
-            // Create UDP client with socket reuse enabled
             listenerClient = new UdpClient();
             listenerClient.Client.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
             listenerClient.Client.Bind(new IPEndPoint(IPAddress.Any, broadcastPort));
@@ -116,9 +105,6 @@ public class LANDiscovery : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Stop listening for broadcasts
-    /// </summary>
     public void StopListening()
     {
         if (listenerClient != null)
@@ -139,28 +125,24 @@ public class LANDiscovery : MonoBehaviour
             byte[] data = listenerClient.EndReceive(result, ref endPoint);
             string message = Encoding.UTF8.GetString(data);
 
-            // Parse the room data
             RoomData roomData = RoomData.FromJson(message);
             roomData.ipAddress = endPoint.Address.ToString();
 
-            // Add to queue for processing on main thread
             lock (queueLock)
             {
                 discoveredRoomsQueue.Enqueue(roomData);
             }
 
-            // Continue listening
             listenerClient.BeginReceive(OnBroadcastReceived, null);
         }
         catch (ObjectDisposedException)
         {
-            // Client was disposed, this is normal when stopping
+            // Normal when stopping
         }
         catch (Exception e)
         {
             Debug.LogError($"Error receiving broadcast: {e.Message}");
 
-            // Try to restart listening
             if (listenerClient != null)
             {
                 try
@@ -176,7 +158,6 @@ public class LANDiscovery : MonoBehaviour
 
     private void Update()
     {
-        // Process discovered rooms on main thread
         lock (queueLock)
         {
             while (discoveredRoomsQueue.Count > 0)
@@ -186,7 +167,6 @@ public class LANDiscovery : MonoBehaviour
             }
         }
 
-        // Broadcast room data at intervals if we're a server
         if (isServer && broadcastClient != null)
         {
             if (Time.time - lastBroadcastTime >= broadcastInterval)
@@ -215,26 +195,124 @@ public class LANDiscovery : MonoBehaviour
     }
 
     /// <summary>
-    /// Get local IP address
+    /// Get local IP address - IMPROVED to avoid virtual adapters
     /// </summary>
     public static string GetLocalIPAddress()
     {
         try
         {
             var host = Dns.GetHostEntry(Dns.GetHostName());
+            var validIPs = new System.Collections.Generic.List<IPAddress>();
+
+            // Collect all IPv4 addresses
             foreach (var ip in host.AddressList)
             {
                 if (ip.AddressFamily == AddressFamily.InterNetwork)
                 {
-                    return ip.ToString();
+                    validIPs.Add(ip);
+                    Debug.Log($"[LANDiscovery] Found IP: {ip}");
                 }
             }
-            throw new Exception("No network adapters with an IPv4 address found!");
+
+            if (validIPs.Count == 0)
+            {
+                throw new Exception("No network adapters with an IPv4 address found!");
+            }
+
+            // Filter out known virtual adapter IPs
+            var nonVirtualIPs = validIPs.Where(ip => !IsVirtualAdapter(ip)).ToList();
+
+            if (nonVirtualIPs.Count > 0)
+            {
+                // Priority 1: 192.168.x.x (but not .56.x which is VirtualBox)
+                var preferred = nonVirtualIPs.FirstOrDefault(ip =>
+                    ip.ToString().StartsWith("192.168.") &&
+                    !ip.ToString().StartsWith("192.168.56."));
+
+                if (preferred != null)
+                {
+                    Debug.Log($"[LANDiscovery] ✓ Selected LAN IP: {preferred}");
+                    return preferred.ToString();
+                }
+
+                // Priority 2: 10.x.x.x
+                preferred = nonVirtualIPs.FirstOrDefault(ip => ip.ToString().StartsWith("10."));
+                if (preferred != null)
+                {
+                    Debug.Log($"[LANDiscovery] ✓ Selected IP: {preferred}");
+                    return preferred.ToString();
+                }
+
+                // Return first non-virtual IP
+                Debug.Log($"[LANDiscovery] ✓ Using first available: {nonVirtualIPs[0]}");
+                return nonVirtualIPs[0].ToString();
+            }
+
+            // Fallback
+            Debug.LogWarning($"[LANDiscovery] ⚠ All IPs appear virtual, using: {validIPs[0]}");
+            return validIPs[0].ToString();
         }
         catch (Exception e)
         {
             Debug.LogError($"Error getting local IP: {e.Message}");
             return "127.0.0.1";
         }
+    }
+
+    /// <summary>
+    /// Check if IP is from a virtual adapter
+    /// </summary>
+    private static bool IsVirtualAdapter(IPAddress ip)
+    {
+        string ipString = ip.ToString();
+
+        // VirtualBox Host-Only: 192.168.56.x
+        if (ipString.StartsWith("192.168.56.")) return true;
+
+        // VMware: 192.168.x.1 where x > 50
+        if (ipString.StartsWith("192.168.") && ipString.EndsWith(".1"))
+        {
+            var parts = ipString.Split('.');
+            int thirdOctet = int.Parse(parts[2]);
+            if (thirdOctet > 50) return true;
+        }
+
+        // Hyper-V: 172.24-31.x.x
+        if (ipString.StartsWith("172."))
+        {
+            var parts = ipString.Split('.');
+            int secondOctet = int.Parse(parts[1]);
+            if (secondOctet >= 24 && secondOctet <= 31) return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Get all IPs for debugging
+    /// </summary>
+    public static System.Collections.Generic.List<string> GetAllIPAddresses()
+    {
+        var ipList = new System.Collections.Generic.List<string>();
+
+        try
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    bool isVirtual = IsVirtualAdapter(ip);
+                    ipList.Add($"{ip} {(isVirtual ? "(Virtual)" : "(Physical)")}");
+                }
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error getting IP list: {e.Message}");
+        }
+
+        return ipList;
     }
 }

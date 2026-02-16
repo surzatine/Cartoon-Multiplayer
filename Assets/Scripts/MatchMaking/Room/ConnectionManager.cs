@@ -1,7 +1,8 @@
-using FishNet.Connection;
+﻿using FishNet.Connection;
 using FishNet.Managing;
 using FishNet.Object;
 using FishNet.Transporting;
+using System.Collections;
 using UnityEngine;
 
 /// <summary>
@@ -48,10 +49,18 @@ public class ConnectionManager : NetworkBehaviour
         base.OnStartClient();
 
         // Subscribe to client events
+        //StartCoroutine(StartClientRoutine());
         networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
 
         Debug.Log("[CompleteConnectionManager] Client started");
     }
+
+    //private IEnumerator StartClientRoutine()
+    //{
+    //    yield return new WaitForSeconds(0.5f);
+
+    //    networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
+    //}
 
     public override void OnStopServer()
     {

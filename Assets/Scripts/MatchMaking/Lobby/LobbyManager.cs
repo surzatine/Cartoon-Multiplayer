@@ -41,7 +41,7 @@ public class LobbyManager : NetworkBehaviour
     public float CountdownTimer => countdownTimer;
     public string RoomId => roomId;
 
-    public static bool IsLobbyActive;
+    //public static bool IsLobbyActive;
 
     private void Awake()
     {

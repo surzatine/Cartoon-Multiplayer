@@ -124,7 +124,7 @@ public class LobbyUI : MonoBehaviour
 
     private void Update()
     {
-        if (!LobbyManager.IsLobbyActive) return;
+        //if (!LobbyManager.IsLobbyActive) return;
         if (lobbyManager == null || !lobbyManager.IsClientInitialized) return;
 
         UpdatePlayerList();
@@ -209,10 +209,16 @@ public class LobbyUI : MonoBehaviour
 
     private void CreatePlayerListItem(LobbyPlayer player)
     {
-            if (playerListItemPrefab == null || playerListContainer == null)
+        if (playerListItemPrefab == null || playerListContainer == null)
             return;
 
+        Debug.Log("Creating Player List Item");
+
         GameObject item = Instantiate(playerListItemPrefab, playerListContainer);
+
+        if (item == null)
+            Debug.LogError("Error Creating Player");
+
         playerListItems[player.clientId] = item;
 
         UpdatePlayerListItemContent(item, player);
@@ -237,7 +243,7 @@ public class LobbyUI : MonoBehaviour
         {
             string displayName = player.playerName;
             if (player.isHost)
-                displayName += " ★"; // Star for host
+                displayName += " *"; // Star for host
             nameText.text = displayName;
         }
 
