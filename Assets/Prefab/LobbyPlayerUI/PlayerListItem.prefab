@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 9135842295050593798}
   - component: {fileID: 1335465152314545226}
   - component: {fileID: 4826218717540877886}
+  - component: {fileID: 1651699259397068198}
   m_Layer: 5
   m_Name: PlayerListItem
   m_TagString: Untagged
@@ -79,6 +80,22 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &1651699259397068198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 412213101352407122}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98f7489479d4c594ba64cc8c28fa0df1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerListItem
+  PlayerNameText: {fileID: 4669674435736358568}
+  PlayerStatusText: {fileID: 2139248892846766096}
+  PlayerProfileImage: {fileID: 4691315250711272535}
+  PlayerStatusImage: {fileID: 4964623187701406099}
 --- !u!1 &1779738748926899581
 GameObject:
   m_ObjectHideFlags: 0

@@ -229,8 +229,10 @@ public class LobbyUI : MonoBehaviour
 
     private void UpdatePlayerListItemContent(GameObject item, LobbyPlayer player)
     {
+        PlayerListItem playerListItem = item.GetComponent<PlayerListItem>();
+        if (playerListItem == null) return;
         // Update player name
-        TMP_Text nameText = item.transform.Find("PlayerName")?.GetComponent<TMP_Text>();
+        TMP_Text nameText = playerListItem.GetPlayerName();
         if (nameText != null)
         {
             string displayName = player.playerName;
@@ -240,8 +242,8 @@ public class LobbyUI : MonoBehaviour
         }
 
         // Update ready status
-        TMP_Text statusText = item.transform.Find("ReadyStatus")?.GetComponent<TMP_Text>();
-        Image statusIcon = item.transform.Find("ReadyIcon")?.GetComponent<Image>();
+        TMP_Text statusText = playerListItem.GetPlayerStatus();
+        Image statusIcon = playerListItem.GetPlayerStatusImage();
 
         if (statusText != null)
         {
