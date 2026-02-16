@@ -124,7 +124,7 @@ public class LobbyUI : MonoBehaviour
 
     private void Update()
     {
-        if (!LobbyManager.IsLobbyActive) return;
+        //if (!LobbyManager.IsLobbyActive) return;
         if (lobbyManager == null || !lobbyManager.IsClientInitialized) return;
 
         UpdatePlayerList();
@@ -237,7 +237,7 @@ public class LobbyUI : MonoBehaviour
         {
             string displayName = player.playerName;
             if (player.isHost)
-                displayName += " ★"; // Star for host
+                displayName += " *"; // Star for host
             nameText.text = displayName;
         }
 
