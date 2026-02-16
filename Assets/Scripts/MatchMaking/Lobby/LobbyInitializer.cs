@@ -1,88 +1,91 @@
+using System;
 using UnityEngine;
-using FishNet.Object;
 using System.Collections;
 
-/// <summary>
-/// Ensures lobby components are properly initialized before use
-/// Attach this to the same GameObject as LobbyUI
-/// </summary>
+[DisallowMultipleComponent]
 public class LobbyInitializer : MonoBehaviour
 {
+    [Header("References")]
     [SerializeField] private LobbyUI lobbyUI;
     [SerializeField] private LobbyManager lobbyManager;
+
+    [Header("Settings")]
     [SerializeField] private float maxWaitTime = 5f;
 
-    private bool isInitialized = false;
+    public bool IsInitialized { get; private set; }
+
+    private void Awake()
+    {
+        if (lobbyUI == null)
+            lobbyUI = GetComponent<LobbyUI>();
+
+        if (lobbyUI != null)
+            lobbyUI.enabled = false;
+    }
 
     private void Start()
     {
-        // Disable LobbyUI until everything is ready
-        if (lobbyUI != null)
-            lobbyUI.enabled = false;
-
-        StartCoroutine(WaitForInitialization());
+        StartCoroutine(InitializeRoutine());
     }
 
-    private IEnumerator WaitForInitialization()
+    private IEnumerator InitializeRoutine()
     {
-        float waitTime = 0f;
+        Debug.Log("[LobbyInitializer] Starting initialization...");
 
-        Debug.Log("[X] InitializeLobbyManager...");
-
-        // Wait for lobby manager to be ready
-        while (lobbyManager == null || !lobbyManager.IsClientInitialized)
-        {
-            // Try to find lobby manager if not assigned
-            if (lobbyManager == null)
+        // Wait for LobbyManager
+        yield return WaitUntilCondition(
+            condition: () =>
             {
-                lobbyManager = FindAnyObjectByType<LobbyManager>();
-            }
+                if (lobbyManager == null)
+                    lobbyManager = FindAnyObjectByType<LobbyManager>();
 
-            waitTime += Time.deltaTime;
-            
-            if (waitTime >= maxWaitTime)
-            {
-                Debug.LogError("[LobbyInitializer] Timeout waiting for LobbyManager initialization!");
-                break;
-            }
+                return lobbyManager != null && lobbyManager.IsClientInitialized;
+            },
+            timeoutMessage: "Timeout waiting for LobbyManager initialization."
+        );
 
-            yield return null;
-        }
+        if (lobbyManager == null)
+            yield break;
 
-        Debug.Log("[X] Initialize LobbyUI...");
+        Debug.Log("[LobbyInitializer] LobbyManager ready.");
 
         // Wait for client connection
-        while (lobbyManager != null && lobbyManager.ClientManager != null && 
-               lobbyManager.ClientManager.Connection == null)
+        yield return WaitUntilCondition(
+            condition: () => lobbyManager?.ClientManager?.Connection != null,
+            timeoutMessage: "Timeout waiting for client connection."
+        );
+
+        Debug.Log("[LobbyInitializer] Client connected.");
+
+        // Let one frame pass to stabilize
+        yield return new WaitForEndOfFrame();
+
+        if (lobbyUI != null)
+            lobbyUI.enabled = true;
+
+        IsInitialized = true;
+
+        Debug.Log("[LobbyInitializer] Initialization complete.");
+    }
+
+    /// <summary>
+    /// Waits until condition returns true or timeout occurs.
+    /// </summary>
+    private IEnumerator WaitUntilCondition(Func<bool> condition, string timeoutMessage)
+    {
+        float timer = 0f;
+
+        while (!condition())
         {
-            waitTime += Time.deltaTime;
-            
-            if (waitTime >= maxWaitTime)
+            timer += Time.deltaTime;
+
+            if (timer >= maxWaitTime)
             {
-                Debug.LogError("[LobbyInitializer] Timeout waiting for client connection!");
-                break;
+                Debug.LogError($"[LobbyInitializer] {timeoutMessage}");
+                yield break;
             }
 
             yield return null;
         }
-
-
-        Debug.Log("[X] Finalize LobbyUI...");
-
-        // Wait one more frame to ensure everything is settled
-        yield return new WaitForEndOfFrame();
-
-        // Enable LobbyUI
-        if (lobbyUI != null)
-        {
-            lobbyUI.enabled = true;
-            Debug.Log("[LobbyInitializer] Lobby UI initialized successfully!");
-        }
-
-        isInitialized = true;
-
-        Debug.Log("[X] Complete LobbyUI...");
     }
-
-    public bool IsInitialized => isInitialized;
 }
