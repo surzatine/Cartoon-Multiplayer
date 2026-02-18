@@ -212,7 +212,7 @@ public class LobbyUI : MonoBehaviour
         if (playerListItemPrefab == null || playerListContainer == null)
             return;
 
-        Debug.Log("Creating Player List Item");
+        Debug.Log($"Creating Player List Item {player.playerName}");
 
         GameObject item = Instantiate(playerListItemPrefab, playerListContainer);
 
