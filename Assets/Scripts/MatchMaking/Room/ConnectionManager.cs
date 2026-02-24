@@ -114,7 +114,7 @@ public class ConnectionManager : NetworkBehaviour
 
     private void OnClientConnectionState(ClientConnectionStateArgs args)
     {
-        Debug.Log($"[CompleteConnectionManager] Client state: {args.ConnectionState}");
+        Debug.LogError($"[CompleteConnectionManager] Client state: {args.ConnectionState}");
 
         if (args.ConnectionState == LocalConnectionState.Started)
         {
@@ -229,6 +229,7 @@ public class ConnectionManager : NetworkBehaviour
         
         if (currentLobbyManager != null && networkManager.IsServerStarted)
         {
+            Debug.LogError("[CompleteConnectionManager] Server is started");
             // Add host to lobby
             string hostName = PlayerPrefs.GetString("CurrentPlayerName", "Host");
             var hostConn = networkManager.ClientManager.Connection;
