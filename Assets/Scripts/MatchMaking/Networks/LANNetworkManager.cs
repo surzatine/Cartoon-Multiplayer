@@ -133,7 +133,7 @@ public class LANNetworkManager : MonoBehaviour
             currentRoom = room;
 
             // Store player name for lobby
-            string playerName = PlayerPrefs.GetString("PlayerName", "Player");
+            string playerName = PlayerPrefs.GetString("PlayerName", PlayerStatics.PlayerName);
             PlayerPrefs.SetString("CurrentPlayerName", playerName);
 
             // Set the server address and port

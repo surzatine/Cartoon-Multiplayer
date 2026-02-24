@@ -48,13 +48,25 @@ public class ConnectionManager : NetworkBehaviour
     {
         base.OnStartClient();
 
-        // Subscribe to client events
-        //StartCoroutine(StartClientRoutine());
+        Debug.Log("OnStartClient CALLED");
+
         networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
 
-        Debug.Log("[CompleteConnectionManager] Client started");
+        // 🔥 IMPORTANT FIX
+        if (networkManager.IsClientStarted)
+        {
+            Debug.Log("Client already started — invoking manually");
+            OnClientConnectionState(
+                new ClientConnectionStateArgs(LocalConnectionState.Started, 0)
+            );
+        }
     }
 
+    //private void Update()
+    //{
+    //    Debug.Log("IsServerStarted: " + networkManager.IsServerStarted);
+    //    Debug.Log("IsClientStarted: " + networkManager.IsClientStarted);
+    //}
     //private IEnumerator StartClientRoutine()
     //{
     //    yield return new WaitForSeconds(0.5f);
@@ -107,14 +119,13 @@ public class ConnectionManager : NetworkBehaviour
         if (args.ConnectionState == LocalConnectionState.Started)
         {
             // Successfully connected to server
-            Debug.Log("[CompleteConnectionManager] Connected to server successfully");
+            Debug.Log($"[CompleteConnectionManager] Connected to server successfully IsOwner: {IsOwner}");
             
-            // Send player name to server
-            if (IsOwner)
-            {
-                string playerName = PlayerPrefs.GetString("CurrentPlayerName", "Player");
-                SendPlayerInfoServerRpc(playerName);
-            }
+            // Send player name to serverIsOwner)
+            
+            string playerName = PlayerPrefs.GetString("CurrentPlayerName", PlayerStatics.PlayerName);
+            SendPlayerInfoServerRpc(playerName);
+            
 
             // Show lobby for client
             if (!lanNetworkManager.IsHost)
