@@ -1,4 +1,4 @@
-using FishNet.Object;
+﻿using FishNet.Object;
 using FishNet.Connection;
 using FishNet.Managing.Scened;
 using UnityEngine;
@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Handles player spawning in game scenes with room isolation
-/// Each room gets its own isolated game instance
+/// Automatically spawns players when they enter the game scene
 /// </summary>
 public class GameSceneSpawner : NetworkBehaviour
 {
@@ -17,6 +17,7 @@ public class GameSceneSpawner : NetworkBehaviour
     [SerializeField] private Transform[] spawnPoints;
     [SerializeField] private float spawnRadius = 1f;
     [SerializeField] private bool randomizeSpawnPoints = true;
+    [SerializeField] private float spawnDelay = 0.5f; // Delay before spawning players
 
     [Header("Team Spawns (Optional)")]
     [SerializeField] private bool useTeamSpawns = false;
@@ -34,7 +35,7 @@ public class GameSceneSpawner : NetworkBehaviour
         // Subscribe to scene loaded event
         SceneManager.OnLoadEnd += OnSceneLoadEnd;
 
-        Debug.Log($"[GameSceneSpawner] Started on server");
+        Debug.Log($"[GameSceneSpawner] Started on server - waiting for scene load");
     }
 
     public override void OnStopServer()
@@ -49,25 +50,43 @@ public class GameSceneSpawner : NetworkBehaviour
     private void OnSceneLoadEnd(SceneLoadEndEventArgs args)
     {
         // Only process if this is our game scene
-        if (!args.LoadedScenes[0].name.Contains("Game")) return;
+        if (args.LoadedScenes == null || args.LoadedScenes.Length == 0)
+            return;
 
-        //Debug.Log($"[GameSceneSpawner] Scene loaded, spawning players for {args.QueueData.MovedNetworkObjects.Length} connections");
+        string sceneName = args.LoadedScenes[0].name;
 
-        //// Spawn players for each connection in this scene instance
-        //foreach (NetworkObject nob in args.QueueData.MovedNetworkObjects)
-        //{
-        //    if (nob.Owner != null && nob.Owner.IsActive)
-        //    {
-        //        SpawnPlayerForConnection(nob.Owner);
-        //    }
-        //}
+        // Check if this is the LanGameScene (or whatever your game scene is called)
+        if (!sceneName.Contains("Game") && sceneName != "LanGameScene")
+            return;
+
+        Debug.Log($"[GameSceneSpawner] Game scene '{sceneName}' loaded!");
+
+        // Spawn players after a short delay to ensure scene is fully loaded
+        Invoke(nameof(SpawnAllPlayers), spawnDelay);
+    }
+
+    [Server]
+    private void SpawnAllPlayers()
+    {
+        Debug.Log($"[GameSceneSpawner] Spawning players...");
+
+        // Get all connected clients
+        foreach (var conn in ServerManager.Clients.Values)
+        {
+            if (conn != null && conn.IsActive)
+            {
+                SpawnPlayerForConnection(conn);
+            }
+        }
+
+        Debug.Log($"[GameSceneSpawner] Finished spawning {spawnedPlayers.Count} players");
     }
 
     /// <summary>
     /// Spawn a player for a specific connection
     /// </summary>
     [Server]
-    private void SpawnPlayerForConnection(NetworkConnection conn)
+    public void SpawnPlayerForConnection(NetworkConnection conn)
     {
         if (playerPrefab == null)
         {
@@ -89,18 +108,22 @@ public class GameSceneSpawner : NetworkBehaviour
         // Instantiate player
         NetworkObject playerInstance = Instantiate(playerPrefab, spawnPosition, spawnRotation);
 
-        // Spawn for this specific connection only (room isolation)
+        // Spawn for this specific connection (owner)
         ServerManager.Spawn(playerInstance, conn);
 
         // Track spawned player
         spawnedPlayers[conn.ClientId] = playerInstance;
 
-        Debug.Log($"[GameSceneSpawner] Spawned player for client {conn.ClientId} at {spawnPosition}");
+        Debug.Log($"[GameSceneSpawner] ✓ Spawned player for client {conn.ClientId} ({GetPlayerName(conn.ClientId)}) at {spawnPosition}");
 
         // Initialize player data
         if (playerInstance.TryGetComponent(out NetworkedPlayer player))
         {
             InitializePlayer(player, conn);
+        }
+        else if (playerInstance.TryGetComponent(out NetworkedPlayerEnhanced playerEnhanced))
+        {
+            InitializePlayerEnhanced(playerEnhanced, conn);
         }
     }
 
@@ -122,7 +145,7 @@ public class GameSceneSpawner : NetworkBehaviour
         // Fallback to default position if no spawn points
         if (spawns == null || spawns.Length == 0)
         {
-            Debug.LogWarning("[GameSceneSpawner] No spawn points defined, using default");
+            Debug.LogWarning("[GameSceneSpawner] No spawn points defined, using default (0,0,0)");
             return Vector3.zero;
         }
 
@@ -150,7 +173,7 @@ public class GameSceneSpawner : NetworkBehaviour
 
         // Get spawn position with random offset
         Vector3 spawnPos = spawns[spawnIndex].position;
-        
+
         if (spawnRadius > 0)
         {
             Vector2 randomCircle = Random.insideUnitCircle * spawnRadius;
@@ -161,25 +184,42 @@ public class GameSceneSpawner : NetworkBehaviour
     }
 
     /// <summary>
-    /// Initialize player with data from lobby
+    /// Initialize basic player
     /// </summary>
     [Server]
     private void InitializePlayer(NetworkedPlayer player, NetworkConnection conn)
     {
-        // Get player name from PlayerPrefs (set in lobby)
-        string playerName = PlayerPrefs.GetString($"Player_{conn.ClientId}_Name", $"Player {conn.ClientId}");
-        
+        string playerName = GetPlayerName(conn.ClientId);
+        Debug.Log($"[GameSceneSpawner] Initialized player {playerName}");
+    }
+
+    /// <summary>
+    /// Initialize enhanced player
+    /// </summary>
+    [Server]
+    private void InitializePlayerEnhanced(NetworkedPlayerEnhanced player, NetworkConnection conn)
+    {
+        string playerName = GetPlayerName(conn.ClientId);
+
         // Set player properties
-        //player.SetPlayerNameServer(playerName);
+        player.SetPlayerNameServer(playerName);
 
         // Assign team if using team spawns
-        //if (useTeamSpawns)
-        //{
-        //    int teamId = conn.ClientId % 2 == 0 ? 1 : 2; // Team A = 1, Team B = 2
-        //    player.SetTeamServer(teamId);
-        //}
+        if (useTeamSpawns)
+        {
+            int teamId = conn.ClientId % 2 == 0 ? 1 : 2; // Team A = 1, Team B = 2
+            player.SetTeamServer(teamId);
+        }
 
-        Debug.Log($"[GameSceneSpawner] Initialized player {playerName} (Team: {(useTeamSpawns ? (conn.ClientId % 2 == 0 ? "A" : "B") : "FFA")})");
+        Debug.Log($"[GameSceneSpawner] Initialized enhanced player {playerName} (Team: {(useTeamSpawns ? (conn.ClientId % 2 == 0 ? "A" : "B") : "FFA")})");
+    }
+
+    /// <summary>
+    /// Get player name from stored data
+    /// </summary>
+    private string GetPlayerName(int clientId)
+    {
+        return PlayerPrefs.GetString($"Player_{clientId}_Name", $"Player {clientId}");
     }
 
     /// <summary>
@@ -191,7 +231,7 @@ public class GameSceneSpawner : NetworkBehaviour
         if (spawnedPlayers.ContainsKey(conn.ClientId))
         {
             NetworkObject playerObj = spawnedPlayers[conn.ClientId];
-            
+
             if (playerObj != null)
             {
                 ServerManager.Despawn(playerObj.gameObject);
@@ -224,7 +264,7 @@ public class GameSceneSpawner : NetworkBehaviour
         }
 
         NetworkObject playerObj = spawnedPlayers[conn.ClientId];
-        
+
         if (playerObj == null)
         {
             Debug.LogWarning($"[GameSceneSpawner] Player object is null for {conn.ClientId}");
@@ -233,16 +273,16 @@ public class GameSceneSpawner : NetworkBehaviour
 
         // Get new spawn position
         Vector3 spawnPos = GetSpawnPosition(conn);
-        
+
         // Teleport player
         playerObj.transform.position = spawnPos;
         playerObj.transform.rotation = Quaternion.identity;
 
         // Reset player state if needed
-        //if (playerObj.TryGetComponent(out NetworkedPlayer player))
-        //{
-        //    player.ResetPlayerState();
-        //}
+        if (playerObj.TryGetComponent(out NetworkedPlayerEnhanced player))
+        {
+            player.ResetPlayerState();
+        }
 
         Debug.Log($"[GameSceneSpawner] Respawned player {conn.ClientId} at {spawnPos}");
     }
