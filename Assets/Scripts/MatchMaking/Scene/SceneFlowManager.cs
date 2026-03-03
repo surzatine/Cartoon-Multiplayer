@@ -8,18 +8,17 @@ using UnityEngine;
 /// Manages the flow between scenes and handles player connections
 /// Attach to NetworkManager and persists across scenes
 /// </summary>
-public class SceneFlowManager : MonoBehaviour
+public class LanSceneFlowManager : MonoBehaviour
 {
-    [Header("Scene Names")]
-    [SerializeField] private string mainMenuScene = "MultiplayerMenu";
-    [SerializeField] private string lobbyScene = "LobbyScene";
-    [SerializeField] private string gameScene = "GameScene";
-
     [Header("References")]
     [SerializeField] private NetworkManager networkManager;
     [SerializeField] private LANNetworkManager lanNetworkManager;
+    [SerializeField] private LobbyManager lobbyManager;
 
-    private LobbyManager lobbyManager;
+    private string mainMenuScene = SceneConstant.MENUSCENE;
+    private string lanLobbyScene = SceneConstant.LAN_LOBBYSCENE;
+    private string gameScene = SceneConstant.LAN_GAMESCENE;
+
     private bool isTransitioningToLobby = false;
 
     private void Awake()
@@ -34,172 +33,40 @@ public class SceneFlowManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    private void Start()
-    {
-        // Subscribe to connection events
-        if (networkManager != null)
-        {
-            networkManager.ServerManager.OnServerConnectionState += OnServerConnectionState;
-            networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
-            networkManager.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
-            networkManager.SceneManager.OnLoadEnd += OnSceneLoadEnd;
-        }
-    }
+    //private void Start()
+    //{
+    //    // Subscribe to connection events
+    //    if (networkManager != null)
+    //    {
+    //        networkManager.ServerManager.OnServerConnectionState += OnServerConnectionState;
+    //        networkManager.ClientManager.OnClientConnectionState += OnClientConnectionState;
+    //        networkManager.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState;
+    //        networkManager.SceneManager.OnLoadEnd += OnSceneLoadEnd;
+    //    }
+    //}
 
-    private void OnDestroy()
-    {
-        if (networkManager != null)
-        {
-            networkManager.ServerManager.OnServerConnectionState -= OnServerConnectionState;
-            networkManager.ClientManager.OnClientConnectionState -= OnClientConnectionState;
-            networkManager.ServerManager.OnRemoteConnectionState -= OnRemoteConnectionState;
-            networkManager.SceneManager.OnLoadEnd -= OnSceneLoadEnd;
-        }
-    }
+    //private void OnDestroy()
+    //{
+    //    if (networkManager != null)
+    //    {
+    //        networkManager.ServerManager.OnServerConnectionState -= OnServerConnectionState;
+    //        networkManager.ClientManager.OnClientConnectionState -= OnClientConnectionState;
+    //        networkManager.ServerManager.OnRemoteConnectionState -= OnRemoteConnectionState;
+    //        networkManager.SceneManager.OnLoadEnd -= OnSceneLoadEnd;
+    //    }
+    //}
 
     #region Connection Callbacks
 
-    private void OnServerConnectionState(ServerConnectionStateArgs args)
-    {
-        Debug.Log($"[SceneFlow] Server state: {args.ConnectionState}");
 
-        if (args.ConnectionState == LocalConnectionState.Started)
-        {
-            // Server started - if hosting, also load lobby for host
-            if (lanNetworkManager != null && lanNetworkManager.IsHost && !isTransitioningToLobby)
-            {
-                LoadLobbyScene();
-            }
-        }
-    }
 
-    private void OnClientConnectionState(ClientConnectionStateArgs args)
-    {
-        Debug.Log($"[SceneFlow] Client state: {args.ConnectionState}");
 
-        if (args.ConnectionState == LocalConnectionState.Started)
-        {
-            // Connected to server - server will load lobby scene for us
-            Debug.Log("[SceneFlow] Connected to server, waiting for lobby scene...");
-        }
-        else if (args.ConnectionState == LocalConnectionState.Stopped)
-        {
-            // Disconnected - return to main menu
-            //if (!Application.isQuitting)
-            //{
-            //    ReturnToMainMenu();
-            //}
-        }
-    }
-
-    private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
-    {
-        Debug.Log($"[SceneFlow] Remote connection {conn.ClientId} state: {args.ConnectionState}");
-
-        if (args.ConnectionState == RemoteConnectionState.Started)
-        {
-            // New player connected
-            if (!isTransitioningToLobby)
-            {
-                // Load lobby scene for this player
-                LoadLobbySceneForConnection(conn);
-            }
-        }
-        else if (args.ConnectionState == RemoteConnectionState.Stopped)
-        {
-            // Player disconnected
-            HandlePlayerDisconnect(conn);
-        }
-    }
-
-    private void OnSceneLoadEnd(SceneLoadEndEventArgs args)
-    {
-        string sceneName = args.LoadedScenes.Length > 0 ? args.LoadedScenes[0].name : "Unknown";
-        Debug.Log($"[SceneFlow] Scene loaded: {sceneName}");
-
-        // Find lobby manager in lobby scene
-        if (sceneName == lobbyScene)
-        {
-            StartCoroutine(InitializeLobby(args));
-        }
-    }
-
-    private System.Collections.IEnumerator InitializeLobby(SceneLoadEndEventArgs args)
-    {
-        // Wait a frame for scene to fully load
-        yield return null;
-
-        lobbyManager = FindObjectOfType<LobbyManager>();
-
-        if (lobbyManager != null)
-        {
-            // Wait for lobby manager to be fully initialized
-            while (!lobbyManager.IsServerInitialized && !lobbyManager.IsClientInitialized)
-            {
-                yield return null;
-            }
-
-            // Add players to lobby (server only)
-            if (networkManager.IsServerStarted)
-            {
-                // Add all connected players to lobby
-                foreach (var conn in networkManager.ServerManager.Clients.Values)
-                {
-                    if (conn.IsActive)
-                    {
-                        AddPlayerToLobby(conn);
-                    }
-                }
-            }
-
-            Debug.Log("[SceneFlow] Lobby initialized successfully");
-        }
-        else
-        {
-            Debug.LogWarning("[SceneFlow] LobbyManager not found in lobby scene!");
-        }
-    }
-
+  
     #endregion
 
     #region Scene Loading
 
-    /// <summary>
-    /// Load lobby scene (Server only)
-    /// </summary>
-    private void LoadLobbyScene()
-    {
-        if (!networkManager.IsServerStarted) return;
-
-        isTransitioningToLobby = true;
-
-        // Create scene load data
-        SceneLoadData sld = new SceneLoadData(lobbyScene);
-        sld.ReplaceScenes = ReplaceOption.All;
-
-        // Load for all connected clients
-        networkManager.SceneManager.LoadGlobalScenes(sld);
-
-        Debug.Log($"[SceneFlow] Loading lobby scene for all players");
-
-        isTransitioningToLobby = false;
-    }
-
-    /// <summary>
-    /// Load lobby scene for specific connection
-    /// </summary>
-    private void LoadLobbySceneForConnection(NetworkConnection conn)
-    {
-        if (!networkManager.IsServerStarted) return;
-
-        SceneLoadData sld = new SceneLoadData(lobbyScene);
-        sld.ReplaceScenes = ReplaceOption.All;
-
-        NetworkConnection[] connections = new NetworkConnection[] { conn };
-        networkManager.SceneManager.LoadConnectionScenes(connections, sld);
-
-        Debug.Log($"[SceneFlow] Loading lobby scene for player {conn.ClientId}");
-    }
+  
 
     /// <summary>
     /// Return to main menu
@@ -276,30 +143,5 @@ public class SceneFlowManager : MonoBehaviour
 
     #region Public Methods
 
-    /// <summary>
-    /// Get current scene type
-    /// </summary>
-    public SceneType GetCurrentSceneType()
-    {
-        string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
-
-        if (currentScene == mainMenuScene)
-            return SceneType.MainMenu;
-        else if (currentScene == lobbyScene)
-            return SceneType.Lobby;
-        else if (currentScene == gameScene)
-            return SceneType.Game;
-        else
-            return SceneType.Unknown;
-    }
-
     #endregion
-}
-
-public enum SceneType
-{
-    Unknown,
-    MainMenu,
-    Lobby,
-    Game
 }
