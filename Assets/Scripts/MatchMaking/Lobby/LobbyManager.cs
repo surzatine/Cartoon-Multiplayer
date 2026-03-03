@@ -1,19 +1,23 @@
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using FishNet.Connection;
+using FishNet.Managing.Scened;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
 
 /// <summary>
-/// Complete lobby manager with waiting room and multi-room isolation
+/// Complete lobby manager with waiting room and game scene loading
 /// </summary>
 public class LobbyManager : NetworkBehaviour
 {
     [Header("Game Settings")]
     [SerializeField] private int minPlayersToStart = 2;
     [SerializeField] private float autoStartCountdown = 10f;
-    [SerializeField] private float waitingTimeBeforeStart = 5f;
+    [SerializeField] private float waitingTimeBeforeStart = 3f;
+
+    [Header("Scene Settings")]
+    private string gameSceneName = SceneConstant.LAN_GAMESCENE; // Your game scene name
 
     [Header("References")]
     [SerializeField] private LANNetworkManager lanNetworkManager;
@@ -41,15 +45,13 @@ public class LobbyManager : NetworkBehaviour
     public float CountdownTimer => countdownTimer;
     public string RoomId => roomId;
 
-    //public static bool IsLobbyActive;
-
     private void Awake()
     {
         if (lanNetworkManager == null)
-            lanNetworkManager = FindAnyObjectByType<LANNetworkManager>();
+            lanNetworkManager = FindObjectOfType<LANNetworkManager>();
 
         if (menuUIManager == null)
-            menuUIManager = FindAnyObjectByType<MenuUIManager>();
+            menuUIManager = FindObjectOfType<MenuUIManager>();
 
         // Generate unique room ID
         roomId = System.Guid.NewGuid().ToString();
@@ -91,7 +93,7 @@ public class LobbyManager : NetworkBehaviour
         {
             return;
         }
-       
+
         if (gameStarted) return;
 
         // Handle countdown
@@ -116,9 +118,6 @@ public class LobbyManager : NetworkBehaviour
 
     #region Player Management
 
-    /// <summary>
-    /// Add player to lobby (Server only)
-    /// </summary>
     [Server]
     public void AddPlayerToLobby(NetworkConnection conn, string playerName)
     {
@@ -153,9 +152,6 @@ public class LobbyManager : NetworkBehaviour
         PlayerJoinedLobbyObserversRpc(newPlayer);
     }
 
-    /// <summary>
-    /// Remove player from lobby (Server only)
-    /// </summary>
     [Server]
     public void RemovePlayerFromLobby(NetworkConnection conn)
     {
@@ -217,9 +213,6 @@ public class LobbyManager : NetworkBehaviour
 
     #region Ready System
 
-    /// <summary>
-    /// Toggle player ready state
-    /// </summary>
     [ServerRpc(RequireOwnership = false)]
     public void ToggleReadyServerRpc(NetworkConnection conn = null)
     {
@@ -276,9 +269,6 @@ public class LobbyManager : NetworkBehaviour
 
     #region Game Start
 
-    /// <summary>
-    /// Force start game (Host only)
-    /// </summary>
     [ServerRpc(RequireOwnership = false)]
     public void ForceStartGameServerRpc(NetworkConnection conn = null)
     {
@@ -354,14 +344,46 @@ public class LobbyManager : NetworkBehaviour
         // Notify all clients game is starting
         GameStartingObserversRpc();
 
-        // Show game UI after brief delay
-        Invoke(nameof(ShowGameUI), waitingTimeBeforeStart);
+        // Load game scene after brief delay
+        Invoke(nameof(LoadGameScene), waitingTimeBeforeStart);
     }
 
     [Server]
-    private void ShowGameUI()
+    private void LoadGameScene()
     {
-        ShowGameUIObserversRpc();
+        Debug.Log($"[LobbyManager {roomId}] Loading game scene: {gameSceneName}");
+
+        // Get all connections in this lobby
+        List<NetworkConnection> connections = new List<NetworkConnection>();
+
+        foreach (var player in lobbyPlayers)
+        {
+            if (ServerManager.Clients.TryGetValue(player.clientId, out NetworkConnection conn))
+            {
+                if (conn != null && conn.IsActive)
+                {
+                    connections.Add(conn);
+                    Debug.Log($"[LobbyManager {roomId}] Adding player {player.clientId} to game scene load");
+                }
+            }
+        }
+
+        if (connections.Count == 0)
+        {
+            Debug.LogError($"[LobbyManager {roomId}] No active connections found!");
+            return;
+        }
+
+        // Create scene load data for THIS ROOM ONLY
+        SceneLoadData sld = new SceneLoadData(gameSceneName);
+        sld.ReplaceScenes = ReplaceOption.All; // Replace all current scenes
+        sld.Options.AllowStacking = false;
+        sld.Options.AutomaticallyUnload = true;
+
+        // CRITICAL: Load scene for ONLY these specific connections (room isolation)
+        SceneManager.LoadConnectionScenes(connections.ToArray(), sld);
+
+        Debug.Log($"[LobbyManager {roomId}] Game scene '{gameSceneName}' loaded for {connections.Count} players");
     }
 
     #endregion
@@ -419,14 +441,6 @@ public class LobbyManager : NetworkBehaviour
     {
         Debug.Log($"[LobbyManager {roomId}] Game is starting!");
         OnGameStarting?.Invoke();
-    }
-
-    [ObserversRpc]
-    private void ShowGameUIObserversRpc()
-    {
-        Debug.Log($"[LobbyManager {roomId}] Showing game UI");
-        // TODO: Load game scene or show game UI
-        // For now, just log - you'll implement your game UI here
     }
 
     #endregion
@@ -495,9 +509,6 @@ public class LobbyManager : NetworkBehaviour
     #endregion
 }
 
-/// <summary>
-/// Lobby player data structure
-/// </summary>
 [System.Serializable]
 public struct LobbyPlayer
 {

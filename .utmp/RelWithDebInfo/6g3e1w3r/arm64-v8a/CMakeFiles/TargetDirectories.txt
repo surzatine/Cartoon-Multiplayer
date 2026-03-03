@@ -1,0 +1,5 @@
+C:/Users/susha/Unity Projects/Cartoon-Multiplayer/.utmp/RelWithDebInfo/6g3e1w3r/arm64-v8a/CMakeFiles/edit_cache.dir
+C:/Users/susha/Unity Projects/Cartoon-Multiplayer/.utmp/RelWithDebInfo/6g3e1w3r/arm64-v8a/CMakeFiles/rebuild_cache.dir
+C:/Users/susha/Unity Projects/Cartoon-Multiplayer/.utmp/RelWithDebInfo/6g3e1w3r/arm64-v8a/GameActivity/CMakeFiles/game.dir
+C:/Users/susha/Unity Projects/Cartoon-Multiplayer/.utmp/RelWithDebInfo/6g3e1w3r/arm64-v8a/GameActivity/CMakeFiles/edit_cache.dir
+C:/Users/susha/Unity Projects/Cartoon-Multiplayer/.utmp/RelWithDebInfo/6g3e1w3r/arm64-v8a/GameActivity/CMakeFiles/rebuild_cache.dir
