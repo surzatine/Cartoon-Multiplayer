@@ -12,6 +12,7 @@ public class GameSceneSpawner : NetworkBehaviour
 {
     [Header("Player Prefab")]
     [SerializeField] private NetworkObject playerPrefab;
+    [SerializeField] private SO_Player soPlayer;
 
     [Header("Spawn Settings")]
     [SerializeField] private Transform[] spawnPoints;
@@ -105,8 +106,11 @@ public class GameSceneSpawner : NetworkBehaviour
         Vector3 spawnPosition = GetSpawnPosition(conn);
         Quaternion spawnRotation = Quaternion.identity;
 
+        Debug.LogError($"Player {PlayerStatics.CharacterId}");
         // Instantiate player
-        NetworkObject playerInstance = Instantiate(playerPrefab, spawnPosition, spawnRotation);
+        //NetworkObject playerInstance = Instantiate(playerPrefab, spawnPosition, spawnRotation);
+        NetworkObject playerInstance = Instantiate(soPlayer.GetPrefab(CharacterId()), spawnPosition, spawnRotation);
+
 
         // Spawn for this specific connection (owner)
         ServerManager.Spawn(playerInstance, conn);
@@ -358,4 +362,9 @@ public class GameSceneSpawner : NetworkBehaviour
     }
 
     #endregion
+
+    private string CharacterId()
+    {
+        return PlayerStatics.CharacterId;
+    }
 }
