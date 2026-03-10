@@ -3,6 +3,7 @@
   <Project Path="MerryYellow.CodeAssist.Editor.csproj" />
   <Project Path="FishNet.Codegen.Cecil.csproj" />
   <Project Path="FishNet.Runtime.csproj" />
+  <Project Path="RuntimeInspector.Runtime.csproj" />
   <Project Path="Unity.FishNet.Codegen.csproj" />
   <Project Path="GameKit.Dependencies.csproj" />
   <Project Path="IngameDebugConsole.Runtime.csproj" />
