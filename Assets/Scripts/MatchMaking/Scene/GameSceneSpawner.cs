@@ -6,23 +6,26 @@ using System.Collections.Generic;
 
 /// <summary>
 /// Handles player spawning in game scenes with room isolation
-/// Automatically spawns players when they enter the game scene
+/// Each client spawns with their own selected character
 /// </summary>
 public class GameSceneSpawner : NetworkBehaviour
 {
-    [Header("Player Prefab")]
-    [SerializeField] private NetworkObject playerPrefab;
+    [Header("Player Prefabs")]
+    [SerializeField] private SO_Player _soPlayer; // Your ScriptableObject with character prefabs
 
     [Header("Spawn Settings")]
     [SerializeField] private Transform[] spawnPoints;
     [SerializeField] private float spawnRadius = 1f;
     [SerializeField] private bool randomizeSpawnPoints = true;
-    [SerializeField] private float spawnDelay = 0.5f; // Delay before spawning players
+    [SerializeField] private float spawnDelay = 0.5f;
 
     [Header("Team Spawns (Optional)")]
     [SerializeField] private bool useTeamSpawns = false;
     [SerializeField] private Transform[] teamASpawnPoints;
     [SerializeField] private Transform[] teamBSpawnPoints;
+
+    [Header("Debug")]
+    [SerializeField] private bool enableDetailedLogs = true;
 
     // Track spawned players in this scene instance
     private Dictionary<int, NetworkObject> spawnedPlayers = new Dictionary<int, NetworkObject>();
@@ -55,11 +58,11 @@ public class GameSceneSpawner : NetworkBehaviour
 
         string sceneName = args.LoadedScenes[0].name;
 
-        // Check if this is the LanGameScene (or whatever your game scene is called)
+        // Check if this is the LanGameScene
         if (!sceneName.Contains("Game") && sceneName != "LanGameScene")
             return;
 
-        Debug.Log($"[GameSceneSpawner] Game scene '{sceneName}' loaded!");
+        Debug.Log($"<color=green>[GameSceneSpawner] Game scene '{sceneName}' loaded!</color>");
 
         // Spawn players after a short delay to ensure scene is fully loaded
         Invoke(nameof(SpawnAllPlayers), spawnDelay);
@@ -68,9 +71,22 @@ public class GameSceneSpawner : NetworkBehaviour
     [Server]
     private void SpawnAllPlayers()
     {
-        Debug.Log($"[GameSceneSpawner] Spawning players...");
+        Debug.Log($"<color=yellow>[GameSceneSpawner] ========== SPAWNING PLAYERS ==========</color>");
 
-        // Get all connected clients
+        // Get character selection sync
+        var characterSync = CharacterSelectionSync.Instance;
+        if (characterSync == null)
+        {
+            Debug.LogWarning("[GameSceneSpawner] CharacterSelectionSync not found! Players will spawn with default character.");
+        }
+
+        // Print all selections before spawning (debug)
+        if (enableDetailedLogs && characterSync != null)
+        {
+            characterSync.PrintAllSelections();
+        }
+
+        // Spawn each connected player
         foreach (var conn in ServerManager.Clients.Values)
         {
             if (conn != null && conn.IsActive)
@@ -79,18 +95,19 @@ public class GameSceneSpawner : NetworkBehaviour
             }
         }
 
-        Debug.Log($"[GameSceneSpawner] Finished spawning {spawnedPlayers.Count} players");
+        Debug.Log($"<color=green>[GameSceneSpawner] ✓ Finished spawning {spawnedPlayers.Count} players</color>");
+        Debug.Log($"<color=yellow>[GameSceneSpawner] ==========================================</color>");
     }
 
     /// <summary>
-    /// Spawn a player for a specific connection
+    /// Spawn a player for a specific connection with THEIR selected character
     /// </summary>
     [Server]
     public void SpawnPlayerForConnection(NetworkConnection conn)
     {
-        if (playerPrefab == null)
+        if (_soPlayer == null)
         {
-            Debug.LogError("[GameSceneSpawner] Player prefab is not assigned!");
+            Debug.LogError("[GameSceneSpawner] SO_Player is not assigned!");
             return;
         }
 
@@ -101,12 +118,29 @@ public class GameSceneSpawner : NetworkBehaviour
             return;
         }
 
+        // CRITICAL: Get THIS CLIENT's character ID (not server's!)
+        int characterId = GetCharacterIdForClient(conn.ClientId);
+
+        if (enableDetailedLogs)
+        {
+            Debug.Log($"<color=cyan>[GameSceneSpawner] Client {conn.ClientId} will spawn as character {characterId}</color>");
+        }
+
         // Get spawn position
         Vector3 spawnPosition = GetSpawnPosition(conn);
         Quaternion spawnRotation = Quaternion.identity;
 
-        // Instantiate player
-        NetworkObject playerInstance = Instantiate(playerPrefab, spawnPosition, spawnRotation);
+        // Get the character prefab from SO_Player using THIS CLIENT's character ID
+        NetworkObject characterPrefab = _soPlayer.GetPlayerPrefab(characterId);
+
+        if (characterPrefab == null)
+        {
+            Debug.LogError($"[GameSceneSpawner] No character prefab for character ID {characterId}! Check SO_Player.");
+            return;
+        }
+
+        // Instantiate THE SELECTED CHARACTER for this client
+        NetworkObject playerInstance = Instantiate(characterPrefab, spawnPosition, spawnRotation);
 
         // Spawn for this specific connection (owner)
         ServerManager.Spawn(playerInstance, conn);
@@ -114,17 +148,49 @@ public class GameSceneSpawner : NetworkBehaviour
         // Track spawned player
         spawnedPlayers[conn.ClientId] = playerInstance;
 
-        Debug.Log($"[GameSceneSpawner] ✓ Spawned player for client {conn.ClientId} ({GetPlayerName(conn.ClientId)}) at {spawnPosition}");
+        string playerName = GetPlayerName(conn.ClientId);
+        string prefabName = characterPrefab.name;
+
+        Debug.Log($"<color=lime>[GameSceneSpawner] ✓✓✓ SPAWNED: Client {conn.ClientId} ({playerName}) as '{prefabName}' (Character ID {characterId}) at {spawnPosition}</color>");
 
         // Initialize player data
-        if (playerInstance.TryGetComponent(out NetworkedPlayer player))
+        InitializePlayer(playerInstance, conn, characterId);
+    }
+
+    /// <summary>
+    /// CRITICAL: Get the character ID for a specific client
+    /// This ensures each client spawns with THEIR selected character, not the server's
+    /// </summary>
+    [Server]
+    private int GetCharacterIdForClient(int clientId)
+    {
+        // Try to get from CharacterSelectionSync
+        var characterSync = CharacterSelectionSync.Instance;
+
+        if (characterSync != null)
         {
-            InitializePlayer(player, conn);
+            int characterId = characterSync.GetPlayerCharacterIdServer(clientId);
+
+            if (enableDetailedLogs)
+            {
+                Debug.Log($"<color=yellow>[GameSceneSpawner] Client {clientId} selected character: {characterId} (from sync)</color>");
+            }
+
+            return characterId;
         }
-        else if (playerInstance.TryGetComponent(out NetworkedPlayerEnhanced playerEnhanced))
+
+        // Fallback: Try PlayerPrefs (in case sync is missing)
+        int fallbackCharId = PlayerPrefs.GetInt($"Player_{clientId}_CharacterId", 0);
+
+        if (fallbackCharId > 0)
         {
-            InitializePlayerEnhanced(playerEnhanced, conn);
+            Debug.LogWarning($"[GameSceneSpawner] Using fallback character {fallbackCharId} for client {clientId} (sync missing)");
+            return fallbackCharId;
         }
+
+        // Final fallback: Use default character 0
+        Debug.LogWarning($"[GameSceneSpawner] No character selection found for client {clientId}, using default (0)");
+        return 0;
     }
 
     /// <summary>
@@ -137,7 +203,6 @@ public class GameSceneSpawner : NetworkBehaviour
         // Use team spawns if enabled
         if (useTeamSpawns)
         {
-            // Determine team (simple alternating for now)
             bool isTeamA = conn.ClientId % 2 == 0;
             spawns = isTeamA ? teamASpawnPoints : teamBSpawnPoints;
         }
@@ -145,8 +210,8 @@ public class GameSceneSpawner : NetworkBehaviour
         // Fallback to default position if no spawn points
         if (spawns == null || spawns.Length == 0)
         {
-            Debug.LogWarning("[GameSceneSpawner] No spawn points defined, using default (0,0,0)");
-            return Vector3.zero;
+            Debug.LogWarning("[GameSceneSpawner] No spawn points defined, using default (0,1,0)");
+            return new Vector3(0, 1, 0);
         }
 
         // Get spawn point index
@@ -154,7 +219,6 @@ public class GameSceneSpawner : NetworkBehaviour
 
         if (randomizeSpawnPoints)
         {
-            // Try to find unused spawn point
             int attempts = 0;
             do
             {
@@ -165,7 +229,6 @@ public class GameSceneSpawner : NetworkBehaviour
         }
         else
         {
-            // Sequential spawning
             spawnIndex = spawnedPlayers.Count % spawns.Length;
         }
 
@@ -184,34 +247,42 @@ public class GameSceneSpawner : NetworkBehaviour
     }
 
     /// <summary>
-    /// Initialize basic player
+    /// Initialize player with data
     /// </summary>
     [Server]
-    private void InitializePlayer(NetworkedPlayer player, NetworkConnection conn)
-    {
-        string playerName = GetPlayerName(conn.ClientId);
-        Debug.Log($"[GameSceneSpawner] Initialized player {playerName}");
-    }
-
-    /// <summary>
-    /// Initialize enhanced player
-    /// </summary>
-    [Server]
-    private void InitializePlayerEnhanced(NetworkedPlayerEnhanced player, NetworkConnection conn)
+    private void InitializePlayer(NetworkObject playerInstance, NetworkConnection conn, int characterId)
     {
         string playerName = GetPlayerName(conn.ClientId);
 
-        // Set player properties
-        player.SetPlayerNameServer(playerName);
-
-        // Assign team if using team spawns
-        if (useTeamSpawns)
+        // Try NetworkedPlayer
+        if (playerInstance.TryGetComponent(out NetworkedPlayer player))
         {
-            int teamId = conn.ClientId % 2 == 0 ? 1 : 2; // Team A = 1, Team B = 2
-            player.SetTeamServer(teamId);
+            if (enableDetailedLogs)
+            {
+                Debug.Log($"[GameSceneSpawner] Initialized NetworkedPlayer: {playerName} with character {characterId}");
+            }
         }
+        // Try NetworkedPlayerEnhanced
+        else if (playerInstance.TryGetComponent(out NetworkedPlayerEnhanced playerEnhanced))
+        {
+            playerEnhanced.SetPlayerNameServer(playerName);
 
-        Debug.Log($"[GameSceneSpawner] Initialized enhanced player {playerName} (Team: {(useTeamSpawns ? (conn.ClientId % 2 == 0 ? "A" : "B") : "FFA")})");
+            // Assign team if using team spawns
+            if (useTeamSpawns)
+            {
+                int teamId = conn.ClientId % 2 == 0 ? 1 : 2;
+                playerEnhanced.SetTeamServer(teamId);
+            }
+
+            if (enableDetailedLogs)
+            {
+                Debug.Log($"[GameSceneSpawner] Initialized NetworkedPlayerEnhanced: {playerName} with character {characterId}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"[GameSceneSpawner] No player script found on spawned character {characterId}");
+        }
     }
 
     /// <summary>

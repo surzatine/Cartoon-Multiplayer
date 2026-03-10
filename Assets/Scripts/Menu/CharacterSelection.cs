@@ -20,7 +20,17 @@ public class CharacterSelection : MonoBehaviour
 
     private void OnClickStart()
     {
-        PlayerStatics.CharacterId = _characterInput.text;
+        int value;
+
+        if (int.TryParse(_characterInput.text, out value))
+        {
+            Debug.Log("Value: " + value);
+        }
+        else
+        {
+            Debug.Log("Invalid number");
+        }
+        PlayerStatics.CharacterId = value;
         PlayerStatics.PlayerName = _usernameInput.text;
 
         SceneManager.LoadScene(1);

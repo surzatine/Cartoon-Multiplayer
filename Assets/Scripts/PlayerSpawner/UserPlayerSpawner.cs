@@ -41,9 +41,9 @@ public class UserPlayerSpawner : MonoBehaviour
             return;
 
         // Example: playerId could come from authentication, login, or custom handshake
-        string playerId = GetPlayerId(conn);
+        int playerId = GetPlayerId(conn);
 
-        NetworkObject prefab = soPlayer.GetPrefab(playerId);
+        NetworkObject prefab = soPlayer.GetPlayerPrefab(playerId);
         if (prefab == null)
         {
             Debug.LogWarning($"No prefab found for PlayerId: {playerId}");
@@ -81,7 +81,7 @@ public class UserPlayerSpawner : MonoBehaviour
         _nextSpawnIndex = (_nextSpawnIndex + 1) % spawnPoints.Length;
     }
 
-    private string GetPlayerId(NetworkConnection conn)
+    private int GetPlayerId(NetworkConnection conn)
     {
         // 🔴 Replace this with your real logic
         // Examples:

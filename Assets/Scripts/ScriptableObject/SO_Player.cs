@@ -7,7 +7,7 @@ public class SO_Player : ScriptableObject
 {
     public List<PlayerData> PlayerData = new List<PlayerData>();
 
-    public NetworkObject GetPrefab(string playerId)
+    public NetworkObject GetPlayerPrefab(int playerId)
     {
         foreach (var p in PlayerData)
         {
@@ -20,7 +20,7 @@ public class SO_Player : ScriptableObject
 [System.Serializable]
 public class PlayerData
 {
-    public string PlayerId;
+    public int PlayerId;
     public string PlayerName;
     public NetworkObject PlayerPrefab;
 }
