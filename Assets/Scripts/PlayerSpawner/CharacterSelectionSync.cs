@@ -13,7 +13,7 @@ public class CharacterSelectionSync : NetworkBehaviour
     public static CharacterSelectionSync Instance { get; private set; }
 
     // Server-side storage: ClientId → CharacterId
-    private Dictionary<int, int> serverCharacterSelections = new Dictionary<int, int>();
+    private Dictionary<int, string> serverCharacterSelections = new Dictionary<int, string>();
 
     private void Awake()
     {
@@ -39,7 +39,7 @@ public class CharacterSelectionSync : NetworkBehaviour
         if (IsOwner)
         {
             // Get character ID from PlayerStatics
-            int characterId = PlayerStatics.CharacterId;
+            string characterId = PlayerStatics.CharacterId;
 
             Debug.Log($"<color=cyan>[CharacterSelectionSync] ✓ Client started - Sending my character ID: {characterId}</color>");
 
@@ -52,7 +52,7 @@ public class CharacterSelectionSync : NetworkBehaviour
     /// Client → Server: Send my selected character ID
     /// </summary>
     [ServerRpc(RequireOwnership = false)]
-    private void SendCharacterSelectionServerRpc(int characterId, NetworkConnection sender = null)
+    private void SendCharacterSelectionServerRpc(string characterId, NetworkConnection sender = null)
     {
         if (sender == null)
         {
@@ -64,7 +64,7 @@ public class CharacterSelectionSync : NetworkBehaviour
         serverCharacterSelections[sender.ClientId] = characterId;
 
         // Also store in PlayerPrefs as backup
-        PlayerPrefs.SetInt($"Player_{sender.ClientId}_CharacterId", characterId);
+        PlayerPrefs.SetString($"Player_{sender.ClientId}_CharacterId", characterId);
         PlayerPrefs.Save();
 
         Debug.Log($"<color=yellow>[CharacterSelectionSync] ✓ SERVER received: Client {sender.ClientId} selected character {characterId}</color>");
@@ -80,7 +80,7 @@ public class CharacterSelectionSync : NetworkBehaviour
     /// Server → Client: Confirm character selection received
     /// </summary>
     [TargetRpc]
-    private void ConfirmCharacterSelectionTargetRpc(NetworkConnection target, int characterId)
+    private void ConfirmCharacterSelectionTargetRpc(NetworkConnection target, string characterId)
     {
         Debug.Log($"<color=green>[CharacterSelectionSync] ✓ Server confirmed my character: {characterId}</color>");
     }
@@ -89,12 +89,12 @@ public class CharacterSelectionSync : NetworkBehaviour
     /// Server → All Clients: Broadcast player's character selection
     /// </summary>
     [ObserversRpc]
-    private void BroadcastCharacterSelectionObserversRpc(int clientId, int characterId)
+    private void BroadcastCharacterSelectionObserversRpc(int clientId, string characterId)
     {
         Debug.Log($"<color=cyan>[CharacterSelectionSync] Player {clientId} selected character {characterId}</color>");
 
         // Store locally for reference
-        PlayerPrefs.SetInt($"Player_{clientId}_CharacterId", characterId);
+        PlayerPrefs.SetString($"Player_{clientId}_CharacterId", characterId);
     }
 
     /// <summary>
@@ -102,19 +102,19 @@ public class CharacterSelectionSync : NetworkBehaviour
     /// Called by GameSceneSpawner to determine which character to spawn
     /// </summary>
     [Server]
-    public int GetPlayerCharacterIdServer(int clientId)
+    public string GetPlayerCharacterIdServer(int clientId)
     {
         // Try dictionary first
         if (serverCharacterSelections.ContainsKey(clientId))
         {
-            int charId = serverCharacterSelections[clientId];
+            string charId = serverCharacterSelections[clientId];
             return charId;
         }
 
         // Try PlayerPrefs backup
-        int backupCharId = PlayerPrefs.GetInt($"Player_{clientId}_CharacterId", -1);
+        string backupCharId = PlayerPrefs.GetString($"Player_{clientId}_CharacterId", "0");
 
-        if (backupCharId >= 0)
+        if (backupCharId == "")
         {
             Debug.LogWarning($"[CharacterSelectionSync] Using fallback character {backupCharId} for client {clientId}");
             serverCharacterSelections[clientId] = backupCharId; // Update dictionary
@@ -123,14 +123,14 @@ public class CharacterSelectionSync : NetworkBehaviour
 
         // Final fallback: default to 0
         Debug.LogWarning($"<color=red>[CharacterSelectionSync] No character selection found for client {clientId}, using default (0)</color>");
-        return 0;
+        return "0";
     }
 
     /// <summary>
     /// Update character selection (can be called during lobby)
     /// Call this if player changes character after connecting
     /// </summary>
-    public void UpdateCharacterSelection(int characterId)
+    public void UpdateCharacterSelection(string characterId)
     {
         // Update PlayerStatics
         PlayerStatics.CharacterId = characterId;

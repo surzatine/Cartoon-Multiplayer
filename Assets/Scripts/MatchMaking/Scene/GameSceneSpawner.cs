@@ -119,7 +119,7 @@ public class GameSceneSpawner : NetworkBehaviour
         }
 
         // CRITICAL: Get THIS CLIENT's character ID (not server's!)
-        int characterId = GetCharacterIdForClient(conn.ClientId);
+        string characterId = GetCharacterIdForClient(conn.ClientId);
 
         if (enableDetailedLogs)
         {
@@ -162,14 +162,14 @@ public class GameSceneSpawner : NetworkBehaviour
     /// This ensures each client spawns with THEIR selected character, not the server's
     /// </summary>
     [Server]
-    private int GetCharacterIdForClient(int clientId)
+    private string GetCharacterIdForClient(int clientId)
     {
         // Try to get from CharacterSelectionSync
         var characterSync = CharacterSelectionSync.Instance;
 
         if (characterSync != null)
         {
-            int characterId = characterSync.GetPlayerCharacterIdServer(clientId);
+            string characterId = characterSync.GetPlayerCharacterIdServer(clientId);
 
             if (enableDetailedLogs)
             {
@@ -180,9 +180,9 @@ public class GameSceneSpawner : NetworkBehaviour
         }
 
         // Fallback: Try PlayerPrefs (in case sync is missing)
-        int fallbackCharId = PlayerPrefs.GetInt($"Player_{clientId}_CharacterId", 0);
+        string fallbackCharId = PlayerPrefs.GetString($"Player_{clientId}_CharacterId", "0");
 
-        if (fallbackCharId > 0)
+        if (fallbackCharId == "")
         {
             Debug.LogWarning($"[GameSceneSpawner] Using fallback character {fallbackCharId} for client {clientId} (sync missing)");
             return fallbackCharId;
@@ -190,7 +190,7 @@ public class GameSceneSpawner : NetworkBehaviour
 
         // Final fallback: Use default character 0
         Debug.LogWarning($"[GameSceneSpawner] No character selection found for client {clientId}, using default (0)");
-        return 0;
+        return "0";
     }
 
     /// <summary>
@@ -250,7 +250,7 @@ public class GameSceneSpawner : NetworkBehaviour
     /// Initialize player with data
     /// </summary>
     [Server]
-    private void InitializePlayer(NetworkObject playerInstance, NetworkConnection conn, int characterId)
+    private void InitializePlayer(NetworkObject playerInstance, NetworkConnection conn, string characterId)
     {
         string playerName = GetPlayerName(conn.ClientId);
 
