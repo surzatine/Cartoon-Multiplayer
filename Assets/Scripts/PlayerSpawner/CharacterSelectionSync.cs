@@ -36,7 +36,7 @@ public class CharacterSelectionSync : NetworkBehaviour
         base.OnStartClient();
 
         // Send local character selection to server
-        if (IsOwner)
+        if (base.IsOwner)
         {
             // Get character ID from PlayerStatics
             string characterId = PlayerStatics.CharacterId;
