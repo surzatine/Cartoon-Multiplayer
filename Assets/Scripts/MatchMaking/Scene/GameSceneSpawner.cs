@@ -95,7 +95,7 @@ public class GameSceneSpawner : NetworkBehaviour
             }
         }
 
-        Debug.Log($"<color=green>[GameSceneSpawner] ✓ Finished spawning {spawnedPlayers.Count} players</color>");
+        Debug.Log($"<color=green>[GameSceneSpawner] _.!.. Finished spawning {spawnedPlayers.Count} players</color>");
         Debug.Log($"<color=yellow>[GameSceneSpawner] ==========================================</color>");
     }
 
@@ -151,7 +151,7 @@ public class GameSceneSpawner : NetworkBehaviour
         string playerName = GetPlayerName(conn.ClientId);
         string prefabName = characterPrefab.name;
 
-        Debug.Log($"<color=lime>[GameSceneSpawner] ✓✓✓ SPAWNED: Client {conn.ClientId} ({playerName}) as '{prefabName}' (Character ID {characterId}) at {spawnPosition}</color>");
+        Debug.Log($"<color=lime>[GameSceneSpawner] _.!.. SPAWNED: Client {conn.ClientId} ({playerName}) as '{prefabName}' (Character ID {characterId}) at {spawnPosition}</color>");
 
         // Initialize player data
         InitializePlayer(playerInstance, conn, characterId);
