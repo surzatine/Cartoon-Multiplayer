@@ -28,7 +28,7 @@ public class CharacterSelectionSync : NetworkBehaviour
     public override void OnStartServer()
     {
         base.OnStartServer();
-        Debug.Log("[CharacterSelectionSync] ✓ Server started");
+        Debug.Log("[CharacterSelectionSync] _.!.. Server started");
     }
 
     public override void OnStartClient()
@@ -36,12 +36,12 @@ public class CharacterSelectionSync : NetworkBehaviour
         base.OnStartClient();
 
         // Send local character selection to server
-        if (IsOwner)
+        if (base.IsOwner)
         {
             // Get character ID from PlayerStatics
             string characterId = PlayerStatics.CharacterId;
 
-            Debug.Log($"<color=cyan>[CharacterSelectionSync] ✓ Client started - Sending my character ID: {characterId}</color>");
+            Debug.Log($"<color=cyan>[CharacterSelectionSync] _.!.. Client started - Sending my character ID: {characterId}</color>");
 
             // Send to server
             SendCharacterSelectionServerRpc(characterId);
@@ -67,7 +67,7 @@ public class CharacterSelectionSync : NetworkBehaviour
         PlayerPrefs.SetString($"Player_{sender.ClientId}_CharacterId", characterId);
         PlayerPrefs.Save();
 
-        Debug.Log($"<color=yellow>[CharacterSelectionSync] ✓ SERVER received: Client {sender.ClientId} selected character {characterId}</color>");
+        Debug.Log($"<color=yellow>[CharacterSelectionSync] _.!.. SERVER received: Client {sender.ClientId} selected character {characterId}</color>");
 
         // Confirm back to client
         ConfirmCharacterSelectionTargetRpc(sender, characterId);
@@ -82,7 +82,7 @@ public class CharacterSelectionSync : NetworkBehaviour
     [TargetRpc]
     private void ConfirmCharacterSelectionTargetRpc(NetworkConnection target, string characterId)
     {
-        Debug.Log($"<color=green>[CharacterSelectionSync] ✓ Server confirmed my character: {characterId}</color>");
+        Debug.Log($"<color=green>[CharacterSelectionSync] _.!.. Server confirmed my character: {characterId}</color>");
     }
 
     /// <summary>
@@ -161,7 +161,7 @@ public class CharacterSelectionSync : NetworkBehaviour
             foreach (var kvp in serverCharacterSelections)
             {
                 string playerName = PlayerPrefs.GetString($"Player_{kvp.Key}_Name", $"Player {kvp.Key}");
-                Debug.Log($"<color=yellow>Client {kvp.Key} ({playerName}) → Character {kvp.Value}</color>");
+                Debug.Log($"<color=yellow>Client {kvp.Key} ({playerName}) -> Character {kvp.Value}</color>");
             }
         }
 

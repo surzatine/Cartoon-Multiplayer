@@ -20,6 +20,7 @@ public class GameManager : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] private GameSceneSpawner spawner;
+    [SerializeField] private CharacterSelectionSync characterSelectionSync;
 
     // Game state
     //[SyncVar(OnChange = nameof(OnGameStateChanged))]
